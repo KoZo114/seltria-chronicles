@@ -1,0 +1,784 @@
+/* セルトリア戦記：見た目の定義 */
+:root {
+  --tile: 44px;
+  --portrait: 48px;
+  --bg: #161c28;
+  --panel: #222b3c;
+  --panel-line: #3a4660;
+  --text: #f1f3f8;
+  --text-dim: #aab3c5;
+  --player: #2f6fe0;
+  --player-dark: #1b458f;
+  --enemy: #d0413a;
+  --enemy-dark: #8a2520;
+  --gold: #f2c94c;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+
+html, body {
+  margin: 0; height: 100%; overflow: hidden; overscroll-behavior: none;
+  background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+  -webkit-text-size-adjust: 100%; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+}
+body { position: fixed; inset: 0; }
+
+#app { position: relative; height: 100%; max-width: 520px; margin: 0 auto; }
+.screen {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+}
+.hidden { display: none !important; }
+
+/* ボタン */
+.button {
+  min-height: 44px; min-width: 44px; padding: 0 12px; border-radius: 10px;
+  border: 1px solid var(--panel-line); background: #2d3850; color: var(--text);
+  font: inherit; font-size: 16px; font-weight: 600; cursor: pointer;
+}
+.button:active:not(:disabled) { transform: translateY(1px); filter: brightness(1.2); }
+.button.primary { background: var(--player); border-color: #6c9cf0; }
+.button.danger { background: var(--enemy); border-color: #ef8a84; }
+.button.heal { background: #1f8f55; border-color: #7fe0a8; }
+.button:disabled { opacity: .38; cursor: default; }
+.button.small { font-size: 14px; padding: 0 10px; }
+.button.large { min-height: 54px; width: 240px; font-size: 19px; }
+
+/* タイトル画面：背景（動画または1枚絵）→ 文字を読みやすくする暗いぼかし → 文字とボタン、の順に重ねる */
+#title-screen { align-items: center; justify-content: space-between; text-align: center; overflow: hidden;
+  background: radial-gradient(circle at 50% 30%, #2b3856 0%, var(--bg) 70%); }
+#title-background { position: absolute; inset: 0; background-size: cover; background-position: center; }
+#title-background video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+#title-shade { position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(180deg, rgba(10,14,28,.72) 0%, rgba(10,14,28,.35) 24%, rgba(10,14,28,0) 44%, rgba(10,14,28,0) 58%, rgba(10,14,28,.55) 76%, rgba(10,14,28,.88) 100%); }
+.title-top, .title-bottom { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; width: 100%; }
+.title-top { padding-top: 7vh; animation: title-rise 1.1s ease-out both; }
+.title-bottom { gap: 12px; padding-bottom: 6vh; animation: title-rise 1.1s .25s ease-out both; }
+@keyframes title-rise { from { opacity: 0; transform: translateY(10px); } }
+.title-crest { width: 66px; height: 73px; filter: drop-shadow(0 3px 8px rgba(0,0,0,.7)) drop-shadow(0 0 14px rgba(242,201,76,.35)); }
+.title-crest svg { width: 100%; height: 100%; }
+/* 題字：上から下へ白金→金の色。文字を切り抜いて色を付けているので、影は filter で付ける */
+.title-name { margin: 10px 0 0; font-size: clamp(36px, 11.5vw, 56px); letter-spacing: .1em; text-indent: .1em; line-height: 1.15;
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; font-weight: 800; color: #fff3cf;
+  background: linear-gradient(180deg, #fffdf2 0%, #ffeeb8 48%, #e9b94a 100%); -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 0 #3a2a00) drop-shadow(0 0 5px rgba(0,0,0,.9)) drop-shadow(0 0 18px rgba(0,0,0,.6)); }
+/* 英字：左右に細い金の線を添える */
+.title-sub { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 8px 0 0; padding: 0 16px;
+  font-size: clamp(11px, 3.2vw, 15px); font-weight: 600; letter-spacing: .42em; color: #f6dc8a; white-space: nowrap;
+  text-shadow: 0 1px 0 #000, 0 0 8px rgba(0,0,0,.9); }
+.title-sub::before, .title-sub::after { content: ""; flex: 0 0 26px; height: 1px; }
+.title-sub::before { background: linear-gradient(90deg, transparent, var(--gold)); }
+.title-sub::after { background: linear-gradient(90deg, var(--gold), transparent); margin-left: -.42em; }
+.title-record { margin: 0 0 6px; min-height: 20px; font-size: 13px; letter-spacing: .08em; color: #e6dcc0; text-shadow: 0 1px 3px #000, 0 0 8px #000; }
+
+/* ステージを選ぶ画面：タイトルの上に重ねる。紺の地に金の二重の縁、明朝体 */
+#stage-select { position: absolute; inset: 0; z-index: 5; display: flex; align-items: center; justify-content: center; padding: 10px 12px;
+  background: radial-gradient(ellipse at 50% 40%, rgba(10,14,30,.55), rgba(4,6,14,.9)); animation: stage-fade .25s ease-out; }
+@keyframes stage-fade { from { opacity: 0; } }
+.stage-panel { position: relative; width: 100%; max-width: 380px; padding: 14px 14px 12px; border-radius: 6px; text-align: center;
+  border: 1px solid #d9b452; background: linear-gradient(180deg, rgba(30,42,82,.97), rgba(11,16,36,.97));
+  box-shadow: inset 0 0 0 4px rgba(11,16,36,.95), inset 0 0 0 5px rgba(242,201,76,.45), 0 18px 40px rgba(0,0,0,.6);
+  animation: stage-rise .3s ease-out; }
+@keyframes stage-rise { from { opacity: 0; transform: translateY(12px) scale(.98); } }
+.stage-eyebrow { margin: 0; font-size: 11px; font-weight: 700; letter-spacing: .5em; text-indent: .5em; color: #c9a54a; }
+/* 見出しの左右に、交差した剣の飾り */
+.stage-heading { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 4px 0 10px;
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; font-size: 20px; font-weight: 800; letter-spacing: .14em; color: #fff3cf;
+  text-shadow: 0 2px 0 #000, 0 0 12px rgba(242,201,76,.35); }
+.stage-heading::before, .stage-heading::after { content: ""; flex: 0 0 22px; height: 22px; opacity: .9;
+  background: center / contain no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg stroke='%23e3bd5a' stroke-linecap='round' fill='none'%3E%3Cpath d='M3 3 L15 15' stroke-width='2.2'/%3E%3Cpath d='M12.5 18.5 L18.5 12.5' stroke-width='2'/%3E%3Cpath d='M16 16 L20.5 20.5' stroke-width='2.6'/%3E%3Cpath d='M21 3 L9 15' stroke-width='2.2'/%3E%3Cpath d='M5.5 12.5 L11.5 18.5' stroke-width='2'/%3E%3Cpath d='M8 16 L3.5 20.5' stroke-width='2.6'/%3E%3C/g%3E%3Ccircle cx='21.2' cy='21.2' r='1.5' fill='%23e3bd5a'/%3E%3Ccircle cx='2.8' cy='21.2' r='1.5' fill='%23e3bd5a'/%3E%3C/svg%3E"); }
+/* 章ごとのページ：5ステージで1ページ。指で左右になぞると、ぴたっと次の章に止まる */
+#stage-list { display: flex; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain; scrollbar-width: none; margin: 0 -4px; }
+#stage-list::-webkit-scrollbar { display: none; }
+.stage-page { flex: 0 0 100%; scroll-snap-align: start; scroll-snap-stop: always; display: flex; flex-direction: column; gap: 7px;
+  padding: 2px 4px; max-height: calc(100dvh - 170px); overflow-y: auto; scrollbar-width: none; }
+.stage-page::-webkit-scrollbar { display: none; }
+.stage-page > .stage-card { flex: none; }
+/* 章の見出し：「第一章」と、その章のステージの範囲。左右に章の色の線 */
+.chapter-title { display: flex; align-items: center; justify-content: center; gap: 10px; margin: -4px 0 0; }
+.chapter-title::before, .chapter-title::after { content: ""; flex: 1; height: 2px; border-radius: 1px; background: linear-gradient(90deg, rgba(242,201,76,0), var(--chapter-line, #d9b452)); }
+.chapter-title::after { transform: scaleX(-1); }
+.chapter-title b { font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; font-size: 18px; font-weight: 800; letter-spacing: .25em; text-indent: .25em; color: #ffe39a;
+  text-shadow: 0 1px 0 #000, 0 0 10px rgba(242,201,76,.35); }
+.chapter-title span { font-size: 10px; font-weight: 700; letter-spacing: .2em; color: #c9a54a; }
+.chapter-more { margin: 6px 0 0; padding: 14px 8px; border-radius: 4px; border: 1px dashed rgba(217,180,82,.35); font-size: 12px; letter-spacing: .1em; color: var(--text-dim); }
+.stage-page.chapter-1 { --chapter-line: #6c9cf0; }
+.stage-page.chapter-2 { --chapter-line: #e0606a; }
+.stage-page.chapter-3 { --chapter-line: #5fc48a; }
+.stage-page.chapter-4 { --chapter-line: #a77ce0; }
+/* 章を切り替える矢印と、章の数の点 */
+#stage-pager { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 8px; }
+.stage-arrow { width: 44px; height: 32px; border-radius: 3px; border: 1px solid rgba(217,180,82,.6); cursor: pointer;
+  background: center / 14px 14px no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M9 2 L4 7 L9 12' fill='none' stroke='%23ffe39a' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"), rgba(11,16,36,.6); }
+.stage-arrow.next { transform: scaleX(-1); }
+.stage-arrow:disabled { opacity: .3; cursor: default; }
+.stage-arrow:active:not(:disabled) { filter: brightness(1.4); }
+#stage-dots { display: flex; gap: 8px; }
+#stage-dots i { width: 9px; height: 9px; border-radius: 50%; border: 1px solid #d9b452; background: transparent; transition: background .2s, transform .2s; }
+#stage-dots i.current { transform: scale(1.25); }
+#stage-dots i.current.chapter-1 { background: #6c9cf0; }
+#stage-dots i.current.chapter-2 { background: #e0606a; }
+#stage-dots i.current.chapter-3 { background: #5fc48a; }
+#stage-dots i.current.chapter-4 { background: #a77ce0; }
+.stage-card { position: relative; display: flex; align-items: center; gap: 10px; width: 100%; min-height: 62px; padding: 7px 12px; text-align: left;
+  border-radius: 4px; border: 1px solid rgba(217,180,82,.55); color: #fff6dc; cursor: pointer; font: inherit;
+  background: linear-gradient(90deg, rgba(44,62,118,.9), rgba(16,23,50,.92));
+  box-shadow: inset 0 0 0 3px rgba(11,16,36,.7), inset 0 0 0 4px rgba(242,201,76,.18); }
+/* 背の低い画面（iPhone SE など）：英字の小見出しと「STAGE 1」を消し、札をさらに詰めて、縦に動かさずに収める */
+@media (max-height: 640px) {
+  .stage-eyebrow, .stage-number { display: none; }   /* 「STAGE 1」は盾の数字と同じなので消す */
+  .stage-card { min-height: 50px; padding: 5px 12px; }
+  .stage-page { gap: 5px; }
+  .stage-heading { margin: 0 0 6px; font-size: 18px; }
+}
+/* 5ステージごとの札の色。金の縁取りはどの色でも同じ */
+.stage-card.chapter-2 { background: linear-gradient(90deg, rgba(128,36,42,.92), rgba(44,12,18,.94)); }
+.stage-card.chapter-3 { background: linear-gradient(90deg, rgba(30,96,62,.92), rgba(10,36,24,.94)); }
+.stage-card.chapter-4 { background: linear-gradient(90deg, rgba(88,48,128,.92), rgba(30,14,48,.94)); }
+.stage-card.chapter-2 .stage-badge path { fill: #7a1f28; }
+.stage-card.chapter-3 .stage-badge path { fill: #1d5a3a; }
+.stage-card.chapter-4 .stage-badge path { fill: #53307a; }
+.stage-card:active:not(:disabled) { transform: translateY(1px); filter: brightness(1.2); }
+.stage-card.next { border-color: #e9c35c; animation: title-glow 2.6s ease-in-out infinite; }
+.stage-card.locked { cursor: default; opacity: .55; filter: grayscale(.7); }
+.stage-badge { flex: none; width: 34px; height: 40px; filter: drop-shadow(0 2px 3px rgba(0,0,0,.6)); }
+.stage-badge svg { width: 100%; height: 100%; }
+.stage-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.stage-number { font-size: 10px; font-weight: 700; letter-spacing: .3em; color: #c9a54a; }
+.stage-name { font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; font-size: 17px; font-weight: 800; letter-spacing: .03em;
+  color: #fff3cf; text-shadow: 0 1px 2px rgba(0,0,0,.8); }
+.stage-status { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: #aab3c5; }
+.stage-status i { font-style: normal; font-weight: 600; color: #e6dcc0; }
+.stage-status.cleared { color: #f2c94c; }
+.stage-status.new { color: #8fe0a0; }
+.stage-status svg { width: 12px; height: 12px; }
+.stage-go { flex: none; padding: 6px 10px; border-radius: 3px; border: 1px solid #d9b452;
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; font-size: 14px; font-weight: 800; letter-spacing: .2em; text-indent: .2em;
+  color: #2a1d00; background: linear-gradient(180deg, #fff1b8, #e3b24a); box-shadow: 0 2px 6px rgba(0,0,0,.45); }
+.stage-card.cleared .stage-go { color: #fff3cf; background: rgba(11,16,36,.6); }
+.stage-back { margin-top: 8px; min-height: 40px; padding: 0 28px; border-radius: 3px; border: 1px solid rgba(217,180,82,.45); cursor: pointer;
+  background: transparent; color: #d8cfb4; font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; font-size: 15px; font-weight: 700; letter-spacing: .3em; text-indent: .3em; }
+.stage-back:active { filter: brightness(1.3); }
+
+/* 最初は「画面をタップ」だけを出す。タップされたら（waiting が外れたら）記録とボタンを出す */
+.title-tap { display: none; margin: 0 0 9vh; font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; font-size: 18px; font-weight: 700;
+  letter-spacing: .4em; text-indent: .4em; color: #fff3cf; text-shadow: 0 1px 3px #000, 0 0 10px #000;
+  animation: title-tap-blink 1.8s ease-in-out infinite; }
+#title-screen.waiting { cursor: pointer; }
+#title-screen.waiting .title-tap { display: block; }
+#title-screen.waiting .title-record, #title-screen.waiting .title-button { display: none; }
+#title-screen:not(.waiting) .title-bottom { animation: title-rise .5s ease-out both; }
+@keyframes title-tap-blink { 50% { opacity: .35; } }
+
+/* 音のオン・オフ（右上） */
+#sound-button { position: absolute; z-index: 2; top: calc(var(--safe-top) + 8px); right: calc(var(--safe-right) + 8px);
+  min-height: 44px; padding: 0 14px; border-radius: 22px; border: 1px solid rgba(217,180,82,.6); cursor: pointer;
+  background: rgba(13,19,40,.6); color: #f6e6b0; font: inherit; font-size: 13px; font-weight: 600; letter-spacing: .06em; }
+#sound-button.off { color: #aab3c5; border-color: rgba(170,179,197,.45); }
+#sound-button:active { filter: brightness(1.3); }
+
+/* タイトルのボタン：紺の地に金の二重の縁。左右に小さなひし形の飾り */
+.title-button {
+  position: relative; width: min(280px, 76vw); min-height: 56px; padding: 0 28px; border-radius: 4px;
+  border: 1px solid #d9b452; color: #fff6dc; cursor: pointer;
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; font-size: 20px; font-weight: 700; letter-spacing: .32em; text-indent: .32em;
+  text-shadow: 0 1px 2px rgba(0,0,0,.8);
+  background: linear-gradient(180deg, rgba(44,62,118,.94) 0%, rgba(20,29,62,.94) 100%);
+  box-shadow: inset 0 0 0 3px rgba(13,20,44,.9), inset 0 0 0 4px rgba(242,201,76,.5), inset 0 14px 16px -12px rgba(255,255,255,.28), 0 6px 18px rgba(0,0,0,.55);
+}
+.title-button::before, .title-button::after { content: ""; position: absolute; top: 50%; width: 7px; height: 7px; margin-top: -3.5px;
+  background: linear-gradient(135deg, #fff1b8, #c9972c); transform: rotate(45deg); }
+.title-button::before { left: 16px; }
+.title-button::after { right: 16px; }
+.title-button:active { transform: translateY(1px); filter: brightness(1.25); }
+.title-button.primary { animation: title-glow 2.6s ease-in-out infinite; }
+.title-button small { display: block; margin-top: 1px; font-size: 11px; letter-spacing: .1em; text-indent: .1em; color: #e6dcc0; }
+#resume-button { padding-top: 4px; padding-bottom: 4px; }
+.title-button:not(.primary) { min-height: 46px; font-size: 16px; border-color: rgba(217,180,82,.6); color: #e9e2cc;
+  background: rgba(13,19,40,.72);
+  box-shadow: inset 0 0 0 3px rgba(13,20,44,.6), inset 0 0 0 4px rgba(242,201,76,.22), 0 4px 12px rgba(0,0,0,.45); }
+.title-button:not(.primary)::before, .title-button:not(.primary)::after { width: 5px; height: 5px; margin-top: -2.5px; opacity: .7; }
+@keyframes title-glow {
+  50% { box-shadow: inset 0 0 0 3px rgba(13,20,44,.9), inset 0 0 0 4px rgba(242,201,76,.8), inset 0 14px 16px -12px rgba(255,255,255,.28), 0 6px 18px rgba(0,0,0,.55), 0 0 18px rgba(242,201,76,.5); }
+}
+
+/* ゲーム画面 */
+#top-bar { display: flex; align-items: center; gap: 6px; padding: 4px 6px; flex: none; }
+#turn-label { flex: 1; display: flex; align-items: center; gap: 6px; font-size: 16px; font-weight: 700; min-width: 0; white-space: nowrap; }
+.side-chip { padding: 3px 8px; border-radius: 999px; font-size: 14px; color: #fff; white-space: nowrap; }
+.side-chip.player { background: var(--player); }
+.side-chip.enemy { background: var(--enemy); border-radius: 4px; }
+.gold-chip { padding: 3px 7px; border-radius: 999px; font-size: 13px; font-weight: 800; color: #2a1d00; white-space: nowrap;
+  background: linear-gradient(180deg, #fff1b8, #e3b24a); }
+.gold-chip small { font-size: 10px; font-weight: 700; }
+/* 町の旗：自軍は青、敵軍は赤、中立は出さない */
+.tile .owner-flag { position: absolute; z-index: 1; left: 50%; top: 2px; width: 12px; height: 12px; margin-left: -2px; pointer-events: none; display: none; }
+.tile .owner-flag::before { content: ""; position: absolute; left: 0; top: 0; width: 2px; height: 12px; background: #3a2a1a; }
+.tile .owner-flag::after { content: ""; position: absolute; left: 2px; top: 0; width: 9px; height: 6px; border: 1px solid #1a1423; }
+.tile .owner-flag.player, .tile .owner-flag.enemy { display: block; }
+.tile .owner-flag.player::after { background: var(--player); }
+.tile .owner-flag.enemy::after { background: var(--enemy); }
+.popup.gold { color: #ffe07a; }
+.popup.enemy { color: #ff9a94; }
+.unit.appear .unit-body { animation: appear .5s ease-out; }
+.unit.arriving { visibility: hidden; }
+/* 召喚の魔法陣 */
+.summon-circle { position: absolute; left: 0; top: 0; width: var(--tile); height: var(--tile); pointer-events: none; z-index: 1;
+  transform: translate(calc(var(--tile) * var(--ux)), calc(var(--tile) * var(--uy))); }
+.summon-circle::before, .summon-circle::after { content: ""; position: absolute; inset: 8%; border-radius: 50%; border: 2px solid #9fd8ff;
+  box-shadow: 0 0 10px rgba(120,200,255,.9), inset 0 0 8px rgba(120,200,255,.7); animation: summon-spin 1s ease-out forwards; }
+.summon-circle::after { inset: 24%; border-style: dashed; animation-direction: reverse; }
+@keyframes summon-spin { from { opacity: 0; transform: scale(.3) rotate(0deg); } 30% { opacity: 1; } to { opacity: 0; transform: scale(1.1) rotate(180deg); } }
+/* 正規部隊：左上に金の星、下に経験値の細い線 */
+.unit .regular-mark { position: absolute; left: 1px; top: 1px; width: 11px; height: 11px; z-index: 2; pointer-events: none;
+  background: center / contain no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M6 .6 7.6 4.2 11.4 4.5 8.5 7 9.4 10.8 6 8.8 2.6 10.8 3.5 7 .6 4.5 4.4 4.2Z' fill='%23ffd75a' stroke='%231a1423' stroke-width='.9' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+.unit.acted .regular-mark { top: 14px; }   /* 「済」の印と重ならないように */
+.unit .exp-bar { position: absolute; left: 14%; right: 14%; bottom: 0; height: 3px; border-radius: 2px; background: rgba(10,14,30,.75); overflow: hidden; pointer-events: none; z-index: 2; }
+.unit .exp-bar i { display: block; height: 100%; background: linear-gradient(90deg, #f2c94c, #fff1b8); }
+.popup.exp small { display: block; font-size: 9px; letter-spacing: .1em; }
+/* 勝ったときの、正規部隊のまとめ */
+.result-regulars { margin-top: 10px; padding: 8px 10px; border-radius: 4px; background: rgba(11,16,36,.55); border: 1px solid rgba(217,180,82,.35); text-align: left; font-size: 12px; }
+.result-regulars > span { display: block; margin-bottom: 4px; font-size: 11px; letter-spacing: .2em; color: #c9a54a; }
+.result-regulars div { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; padding: 2px 0; }
+.result-regulars b { color: #fff3cf; }
+.result-regulars span { color: #e6dcc0; }
+.result-regulars em { font-style: normal; font-weight: 800; color: #8fe0a0; }
+.result-regulars em.bad { color: #ff9a94; }
+/* ランクアップの札 */
+#rankup-card { position: absolute; inset: 0; z-index: 28; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(6,9,15,.6); cursor: pointer; }
+.rankup-box { width: 100%; max-width: 300px; padding: 14px 14px 16px; border-radius: 6px; text-align: center; border: 1px solid #d9b452;
+  background: linear-gradient(180deg, #1e2a52, #0b1024); box-shadow: inset 0 0 0 4px rgba(11,16,36,.9), inset 0 0 0 5px rgba(242,201,76,.45), 0 0 30px rgba(242,201,76,.45);
+  animation: stage-rise .3s ease-out; }
+.rankup-title { font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; font-size: 24px; font-weight: 900; letter-spacing: .15em; color: #ffe39a;
+  text-shadow: 0 2px 0 #5a4300, 0 0 12px rgba(242,201,76,.6); animation: victory-title .6s cubic-bezier(.2,1.6,.4,1) both; }
+.rankup-portrait { display: block; width: 112px; height: 112px; margin: 6px auto 4px; image-rendering: pixelated; filter: drop-shadow(0 0 10px rgba(255,230,150,.7)); }
+.rankup-text { font-size: 14px; color: #e6dcc0; line-height: 1.6; }
+.rankup-text b { color: #fff3cf; font-size: 16px; }
+.rankup-text em { font-style: normal; font-weight: 800; color: #8fe0a0; font-size: 16px; }
+.rankup-line { margin-top: 8px; font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; font-size: 14px; font-weight: 700; color: #ffe39a; }
+/* 出陣の準備 */
+#prep-select { position: absolute; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center; padding: 10px 12px;
+  background: radial-gradient(ellipse at 50% 40%, rgba(10,14,30,.7), rgba(4,6,14,.94)); animation: stage-fade .25s ease-out; }
+.prep-lead { margin: -4px 0 10px; font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; font-size: 15px; font-weight: 800; color: #fff3cf; }
+.prep-lead small { display: block; margin-top: 3px; font-family: -apple-system, "Hiragino Sans", sans-serif; font-size: 12px; font-weight: 700; color: #c8cfdf; }
+.prep-lead em { display: block; font-style: normal; color: #ff9a94; }
+#prep-list { display: flex; flex-direction: column; gap: 7px; max-height: calc(100dvh - 260px); overflow-y: auto; }
+.prep-card { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 58px; padding: 5px 10px; border-radius: 4px; text-align: left; cursor: pointer; font: inherit; color: #fff6dc;
+  border: 1px solid rgba(217,180,82,.35); background: linear-gradient(90deg, rgba(30,38,70,.9), rgba(14,18,38,.92)); opacity: .7; }
+.prep-card.on { opacity: 1; border-color: #e9c35c; background: linear-gradient(90deg, rgba(44,62,118,.95), rgba(16,23,50,.95)); box-shadow: inset 0 0 0 1px rgba(242,201,76,.35); }
+.prep-check { flex: none; width: 40px; padding: 3px 0; border-radius: 3px; text-align: center; font-size: 11px; font-weight: 800; color: #aab3c5; border: 1px solid rgba(170,179,197,.5); }
+.prep-card.on .prep-check { color: #2a1d00; background: linear-gradient(180deg, #fff1b8, #e3b24a); border-color: #d9b452; }
+.prep-art { flex: none; width: 44px; height: 44px; }
+.prep-art img { width: 100%; height: 100%; image-rendering: pixelated; }
+.prep-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.prep-name { font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; font-size: 16px; font-weight: 800; color: #fff3cf; }
+.prep-name small { margin-left: 6px; font-family: -apple-system, "Hiragino Sans", sans-serif; font-size: 11px; color: #c9a54a; }
+.prep-exp { display: block; height: 5px; border-radius: 3px; background: rgba(10,14,30,.8); overflow: hidden; }
+.prep-exp i { display: block; height: 100%; background: linear-gradient(90deg, #f2c94c, #fff1b8); }
+.prep-exp-label { font-size: 11px; color: #c8cfdf; }
+.prep-go { width: 100%; margin-top: 12px; }
+.prep-go:disabled { opacity: .5; }
+#turn-label .turn-limit { font-size: 12px; font-weight: 700; color: var(--text-dim); margin-left: 1px; }
+@keyframes appear { from { opacity: 0; transform: scale(.4); } }
+.command.hire { background: linear-gradient(180deg, #b0862a, #6e5112); border-color: #f2d58a; }
+.command.hire .command-icon { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='8.5' fill='none' stroke='%23fff' stroke-width='2'/%3E%3Cpath d='M12 7.5v9M9.5 9.5h4a1.8 1.8 0 0 1 0 3.5h-3a1.8 1.8 0 0 0 0 3.5h4' fill='none' stroke='%23fff' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E"); }
+.command.hire-option { background: linear-gradient(180deg, #4a5570, #2d3550); border-color: #d9b452; font-size: 15px; letter-spacing: .02em; flex-direction: column; gap: 0; }
+.command.hire-option em { display: block; font-style: normal; font-size: 12px; color: #ffe07a; }
+.command.hire-option .command-icon { display: none; }
+
+#board-area { position: relative; flex: 1; min-height: 0; display: flex; }
+#board-wrap { position: relative; flex: 1; min-width: 0; min-height: 0; display: flex; overflow: hidden; }
+/* 大きいマップ：指でなぞって動かす。margin: auto で、小さいマップは真ん中に、大きいマップは端から並べる */
+#board-wrap.scrollable { overflow: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; scrollbar-width: none; }
+#board-wrap.scrollable::-webkit-scrollbar { display: none; }
+#board { position: relative; flex: none; margin: auto; border: 2px solid #0b0f17; border-radius: 4px; overflow: hidden; }
+/* まだ続きがある側の端の影 */
+.board-shade { position: absolute; pointer-events: none; opacity: 0; transition: opacity .2s; z-index: 5; }
+.board-shade.top { left: 0; right: 0; top: 0; height: 18px; background: linear-gradient(rgba(0,0,0,.55), rgba(0,0,0,0)); }
+.board-shade.bottom { left: 0; right: 0; bottom: 0; height: 18px; background: linear-gradient(rgba(0,0,0,0), rgba(0,0,0,.55)); }
+.board-shade.left { top: 0; bottom: 0; left: 0; width: 16px; background: linear-gradient(90deg, rgba(0,0,0,.55), rgba(0,0,0,0)); }
+.board-shade.right { top: 0; bottom: 0; right: 0; width: 16px; background: linear-gradient(90deg, rgba(0,0,0,0), rgba(0,0,0,.55)); }
+#board-area.more-top .board-shade.top, #board-area.more-bottom .board-shade.bottom,
+#board-area.more-left .board-shade.left, #board-area.more-right .board-shade.right { opacity: 1; }
+
+/* 騎士の向き：コマの端に小さな金の矢印 */
+.unit .facing-mark { position: absolute; left: 50%; top: 50%; width: 0; height: 0; z-index: 2; pointer-events: none;
+  border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 8px solid #ffd75a;
+  filter: drop-shadow(0 0 1px #1a1423) drop-shadow(0 1px 1px rgba(0,0,0,.6)); }
+.unit[data-facing="up"] .facing-mark { transform: translate(-50%, calc(var(--tile) * -0.5 - 1px)); }
+.unit[data-facing="down"] .facing-mark { transform: translate(-50%, calc(var(--tile) * 0.5 - 7px)) rotate(180deg); }
+.unit[data-facing="left"] .facing-mark { transform: translate(calc(var(--tile) * -0.5 - 3px), -50%) rotate(-90deg); }
+.unit[data-facing="right"] .facing-mark { transform: translate(calc(var(--tile) * 0.5 - 9px), -50%) rotate(90deg); }
+/* 騎士の向きを選ぶ矢印（選んでいる部隊の上下左右の隣のマス） */
+.facing-choice { position: absolute; inset: 0; pointer-events: none; }
+.facing-arrow { position: absolute; left: 0; top: 0; width: var(--tile); height: var(--tile); padding: 0; border: 0; pointer-events: auto; cursor: pointer;
+  transform: translate(calc(var(--tile) * var(--ux)), calc(var(--tile) * var(--uy))); background: rgba(10,14,30,.45);
+  animation: facing-pulse 1s ease-in-out infinite alternate; }
+.facing-arrow::after { content: ""; position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform: translate(-50%, -60%);
+  border-left: 11px solid transparent; border-right: 11px solid transparent; border-bottom: 16px solid #ffd75a;
+  filter: drop-shadow(0 0 2px #1a1423); }
+.facing-arrow.down::after { transform: translate(-50%, -40%) rotate(180deg); }
+.facing-arrow.left::after { transform: translate(-60%, -50%) rotate(-90deg); }
+.facing-arrow.right::after { transform: translate(-40%, -50%) rotate(90deg); }
+.facing-arrow.current { background: rgba(242,201,76,.35); box-shadow: inset 0 0 0 2px #ffd75a; }
+@keyframes facing-pulse { to { background-color: rgba(242,201,76,.28); } }
+/* 全体の図を開くボタン（大きいマップのときだけ、マップの右下に浮かべる） */
+#overview-button { position: absolute; right: 8px; bottom: 8px; z-index: 6; width: 52px; height: 52px; padding: 22px 0 0; border-radius: 10px;
+  border: 1px solid #d9b452; color: #ffe39a; font-size: 12px; font-weight: 800; letter-spacing: .1em; text-indent: .1em;
+  background: center 7px / 22px 18px no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 18'%3E%3Cpath d='M1 3 L7 1 L15 3 L21 1 V15 L15 17 L7 15 L1 17 Z' fill='none' stroke='%23ffe39a' stroke-width='1.6' stroke-linejoin='round'/%3E%3Cpath d='M7 1 V15 M15 3 V17' stroke='%23ffe39a' stroke-width='1.2'/%3E%3C/svg%3E"), rgba(14,20,40,.86);
+  box-shadow: 0 3px 10px rgba(0,0,0,.5), inset 0 0 0 2px rgba(11,16,36,.9); }
+#overview-button:active { transform: scale(.95); }
+/* 全体の図 */
+#overview { position: absolute; inset: 0; z-index: 24; display: flex; align-items: center; justify-content: center; padding: 12px;
+  background: rgba(6,9,15,.86); }
+#overview-box { width: 100%; max-width: 420px; padding: 12px 12px 10px; border-radius: 6px; border: 1px solid #d9b452; text-align: center;
+  background: linear-gradient(180deg, #1e2a52, #0b1024); box-shadow: inset 0 0 0 4px rgba(11,16,36,.9), inset 0 0 0 5px rgba(242,201,76,.4), 0 16px 36px rgba(0,0,0,.6);
+  animation: stage-rise .2s ease-out; }
+#overview-box h2 { margin: 0 0 8px; font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; font-size: 18px; letter-spacing: .2em; color: #ffe39a; }
+#overview-canvas { display: block; margin: 0 auto; border: 2px solid #0b0f17; border-radius: 3px; cursor: pointer; touch-action: none; }
+.overview-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px; margin: 8px 0 4px; font-size: 12px; color: #e6dcc0; }
+.overview-legend i { display: inline-block; width: 10px; height: 10px; margin-right: 4px; border-radius: 50%; vertical-align: -1px; border: 1px solid #fff; }
+.overview-legend i.player { background: #3d7ef0; }
+.overview-legend i.enemy { background: #e0453a; border-radius: 2px; }
+.overview-legend i.king { background: transparent; border: 2px solid #ffd75a; }
+.overview-legend i.view { background: transparent; border: 2px solid #fff; border-radius: 1px; }
+.overview-note { margin: 2px 0 10px; font-size: 12px; color: var(--text-dim); }
+#tiles { display: grid; }
+/* 重なり順：マス → ユニット → ダメージ表示。選択枠の付いたマスがユニットを隠さないようにする */
+#units, #effects { position: absolute; inset: 0; pointer-events: none; }
+#units { z-index: 2; }
+#effects { z-index: 3; }
+
+.tile { position: relative; width: var(--tile); height: var(--tile); padding: 0; margin: 0; border: 0;
+  border-right: 1px solid rgba(0,0,0,.14); border-bottom: 1px solid rgba(0,0,0,.14); border-radius: 0;
+  background: #a9cf86; display: block; cursor: pointer; overflow: hidden; }
+.tile.alt { background: #a2c97e; }
+.tile.t-forest { background: #6fa862; }
+.tile.t-castle { background: #cfc8b4; }
+/* 画像のマス：枠線を付けると絵が1px縮んでドットが乱れるので、枠線は上に重ねて描く */
+.tile.has-image { border: 0; background-size: 100% 100%; background-repeat: no-repeat; image-rendering: pixelated; }
+.tile.has-image::before { content: ""; position: absolute; inset: 0; pointer-events: none; box-shadow: inset -1px -1px 0 rgba(0,0,0,.16); }
+.tile svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.tile::after { content: ""; position: absolute; inset: 0; pointer-events: none; }
+/* 移動できるマス：青＋中央の点 */
+.tile.move::after { background: radial-gradient(circle, rgba(255,255,255,.9) 0 9%, rgba(40,110,255,.5) 11%); box-shadow: inset 0 0 0 1px rgba(20,70,200,.6); }
+/* 攻撃が届くマス：赤い斜線 */
+.tile.range::after { background: repeating-linear-gradient(45deg, rgba(225,40,40,.5) 0 3px, rgba(225,40,40,.14) 3px 8px); }
+/* 今すぐ攻撃できる敵：太い赤枠 */
+.tile.target::after { background: rgba(255,40,40,.4); box-shadow: inset 0 0 0 3px #ff2a2a; animation: target-pulse .8s ease-in-out infinite alternate; }
+/* 敵が移動できるマス：橙 */
+.tile.ally::after { background: rgba(60,220,120,.35); box-shadow: inset 0 0 0 3px #3ddc84; animation: target-pulse .8s ease-in-out infinite alternate; }
+/* なわばり：移動できるマスのうち、入ると止まるマスに赤い点。敵をタップしたときは、その敵のなわばりを赤い点線で囲む */
+.tile.zone::before { content: ""; position: absolute; z-index: 1; left: auto; bottom: auto; right: 3px; top: 3px; width: 8px; height: 8px; border-radius: 50%;
+  background: #ff3b30; box-shadow: 0 0 0 1.5px #fff; pointer-events: none; }
+.tile.enemy-zone { box-shadow: inset 0 0 0 2px rgba(255,59,48,.85); }
+.tile.enemy-zone::before { content: ""; position: absolute; z-index: 1; inset: 3px; border: 2px dashed rgba(255,255,255,.75); border-radius: 3px; pointer-events: none; }
+.tile.danger::after { background: rgba(255,160,0,.5); box-shadow: inset 0 0 0 1px rgba(170,90,0,.6); }
+.tile.cursor { box-shadow: inset 0 0 0 3px #ffe45c; }
+.tile.cursor::after { box-shadow: inset 0 0 0 3px #ffe45c; }
+@keyframes target-pulse { from { opacity: .65; } to { opacity: 1; } }
+
+/* ユニット */
+.unit { position: absolute; left: 0; top: 0; width: var(--tile); height: var(--tile);
+  transform: translate(calc(var(--tile) * var(--ux)), calc(var(--tile) * var(--uy)));
+  transition: transform .24s ease-out, opacity .3s; }
+.unit-body { position: absolute; inset: 0; }
+/* ドット絵のユニット：足元の台座は、自軍が丸、敵軍が四角（色が分からなくても形で見分けられる） */
+.unit-plate { position: absolute; inset: 1px; border: 2px solid; }
+.unit.player .unit-plate { border-radius: 50%; background: rgba(47,111,224,.42); border-color: #cfe0ff; }
+.unit.enemy .unit-plate { border-radius: 3px; background: rgba(208,65,58,.42); border-color: #ffd2ce; }
+.sprite { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; -webkit-user-drag: none; }
+.unit-body svg { position: absolute; left: 1px; top: 1px; width: calc(100% - 2px); height: calc(100% - 2px); display: block; filter: drop-shadow(0 1px 1px rgba(0,0,0,.55)); }
+.unit .base { stroke: #fff; stroke-width: 2; }
+.unit.player .base, .unit.player .pointer { fill: var(--player); }
+.unit.enemy .base, .unit.enemy .pointer { fill: var(--enemy); }
+.unit .pointer { stroke: #fff; stroke-width: 1.5; stroke-linejoin: round; }
+.unit .glyph { fill: #fff; stroke: #fff; stroke-width: 0; }
+.unit .glyph .line { fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.unit .glyph .crown { fill: var(--gold); stroke: #5a4300; stroke-width: 1; stroke-linejoin: round; }
+.unit .hp { position: absolute; right: 0; bottom: 0; min-width: 18px; padding: 0 3px; border-radius: 4px 0 0 0;
+  font-size: 12px; line-height: 15px; font-weight: 800; text-align: center; color: #fff; background: #1d7a35; }
+.unit .hp.mid { background: #a8780a; }
+.outlook { display: inline-block; padding: 0 8px; border-radius: 9px; font-size: 13px; font-weight: 800; color: #fff; }
+.outlook.advantage { background: #1d7a35; }
+.outlook.even { background: #6b7385; }
+.outlook.disadvantage { background: #b02020; }
+.outlook.heal { background: #1f8f55; }
+.popup.heal { color: #8ff0b4; }
+.unit.blessed .unit-body { animation: blessed .7s ease-out; }
+@keyframes blessed { 0% { filter: brightness(1); } 30% { filter: brightness(1.9) drop-shadow(0 0 6px #a8ffcc); } 100% { filter: brightness(1); } }
+/* 兵士の印（●）：6人隊は2列×3、3人隊は1列×3。倒れた兵士は暗く、けが人は薄く、これから倒れる兵士は赤い縁取り */
+.unit .pips { position: absolute; left: 0; bottom: 0; display: grid; grid-template-columns: repeat(3, auto); gap: 1px;
+  padding: 2px; border-radius: 0 4px 0 0; background: rgba(8,12,22,.72); }
+.unit .pips i { display: block; width: 5px; height: 5px; border-radius: 50%; background: #fff; }
+.unit .pips.heavy-squad i { width: 6px; height: 6px; }
+.unit.player .pips i { background: #9cc2ff; }
+.unit.enemy .pips i { background: #ffa59f; }
+.unit .pips i.wounded { opacity: .5; }
+.unit .pips i.down { background: #39424f; }
+.unit .pips i.doomed { background: #ff3b30; box-shadow: 0 0 0 1px #fff; opacity: 1; animation: pip-doomed .5s ease-in-out infinite alternate; }
+@keyframes pip-doomed { to { background: #7a1410; } }
+.unit .hp.low { background: #b02020; }
+.unit .done-mark { display: none; position: absolute; left: 0; top: 0; padding: 0 3px; border-radius: 0 0 4px 0;
+  font-size: 10px; line-height: 14px; font-weight: 700; color: #fff; background: rgba(0,0,0,.7); }
+.unit.acted .unit-body { filter: grayscale(.85) brightness(.62); }
+/* 構え中の印（右上の金の盾）。構えている部隊は、行動済みでも暗くしない（構えて待っていることが分かるように） */
+.unit .brace-mark { display: none; position: absolute; right: 0; top: 0; width: 15px; height: 15px; background: center / contain no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2 L21 5 V11.5 C21 17 17 20.5 12 22.5 C7 20.5 3 17 3 11.5 V5 Z' fill='%23f2c94c' stroke='%235a4300' stroke-width='1.6' stroke-linejoin='round'/%3E%3Cpath d='M12 6 V18' stroke='%235a4300' stroke-width='2'/%3E%3C/svg%3E"); filter: drop-shadow(0 1px 1px rgba(0,0,0,.8)); }
+.unit.braced .brace-mark { display: block; }
+.unit.braced.acted .unit-body { filter: brightness(.9); }
+.unit.braced.acted .done-mark { display: none; }
+.unit.acted .done-mark { display: block; }
+.unit.ready .unit-body { animation: ready-glow 1.1s ease-in-out infinite alternate; }
+.unit.selected .unit-body { animation: none; filter: drop-shadow(0 0 5px #ffe45c) drop-shadow(0 0 2px #ffe45c); }
+.unit.fallen { opacity: 0; }
+.unit.lunge .unit-body { animation: lunge .22s ease-out; }
+.unit.shake .unit-body { animation: shake .3s linear; }
+@keyframes ready-glow { from { filter: drop-shadow(0 0 0 rgba(255,255,255,0)); } to { filter: drop-shadow(0 0 5px #fff); } }
+@keyframes lunge { 50% { transform: translate(var(--lx), var(--ly)); } }
+@keyframes shake { 20% { transform: translateX(-4px); filter: brightness(2.4); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(3px); } }
+
+.popup { position: absolute; left: 0; top: 0; width: calc(var(--tile) * 3); margin-left: calc(var(--tile) * -1);
+  text-align: center; font-size: 20px; font-weight: 900; color: #fff; white-space: nowrap;
+  text-shadow: 0 0 3px #000, 0 1px 0 #000, 1px 0 0 #000, -1px 0 0 #000, 0 -1px 0 #000;
+  transform: translate(calc(var(--tile) * var(--ux)), calc(var(--tile) * var(--uy)));
+  animation: popup-rise .75s ease-out forwards; z-index: 5; }
+.popup.crit { color: var(--gold); font-size: 22px; }
+.popup.miss { color: #cfd6e6; font-size: 17px; }
+.popup span { display: block; }
+.popup small { display: block; font-size: 12px; }
+@keyframes popup-rise { 0% { opacity: 0; margin-top: 6px; } 15% { opacity: 1; } 75% { opacity: 1; } 100% { opacity: 0; margin-top: -16px; } }
+
+#banner { position: absolute; left: 0; right: 0; top: 38%; padding: 10px 0; text-align: center; pointer-events: none;
+  font-size: 22px; font-weight: 800; letter-spacing: .1em; color: #fff; background: rgba(10,14,22,.82);
+  border-top: 2px solid var(--gold); border-bottom: 2px solid var(--gold); animation: banner-show .9s ease-out forwards; z-index: 6; }
+#banner.enemy { border-color: var(--enemy); }
+#banner.player { border-color: #6c9cf0; }
+@keyframes banner-show { 0% { opacity: 0; transform: scaleY(.3); } 18% { opacity: 1; transform: none; } 78% { opacity: 1; } 100% { opacity: 0; } }
+
+/* 情報欄と案内 */
+#info-panel { flex: none; height: 74px; margin: 4px 6px 0; padding: 6px 10px; border-radius: 10px;
+  background: var(--panel); border: 1px solid var(--panel-line); font-size: 14px; line-height: 20px; overflow-x: hidden; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+/* 文が長くて入りきらないときは、情報欄の中を指で上下に動かせる */
+#info-panel { scrollbar-width: none; }
+#info-panel::-webkit-scrollbar { display: none; }
+#info-panel .info-row { display: flex; gap: 8px; align-items: center; min-height: 100%; }
+#info-panel .portrait { flex: none; box-sizing: content-box; width: var(--portrait); height: var(--portrait); image-rendering: pixelated; border-radius: 8px; background: #33405c; border: 2px solid var(--panel-line); }
+#info-panel .portrait.player { border-color: #6c9cf0; border-radius: 50%; }
+#info-panel .portrait.enemy { border-color: #ef8a84; }
+#info-panel .info-text { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#info-panel .name { font-weight: 800; font-size: 15px; }
+#info-panel .player-text { color: #8fb6ff; }
+#info-panel .enemy-text { color: #ff9a94; }
+#info-panel .affinity-line { font-size: 11px; font-weight: 700; }
+#info-panel .affinity-line span { display: inline-block; margin-left: 4px; padding: 0 5px; border-radius: 3px; line-height: 16px; }
+#info-panel .affinity-line .good { color: #10301a; background: #8fe0a0; }
+#info-panel .affinity-line .bad { color: #3a0d0a; background: #ff9a94; }
+.forecast-table small.affinity { display: inline-block; margin-left: 3px; padding: 0 4px; border-radius: 3px; font-size: 10px; font-weight: 800; color: #10301a; background: #8fe0a0; vertical-align: 1px; }
+#info-panel .strong { color: var(--gold); font-weight: 700; }
+#info-panel .dim { color: var(--text-dim); }
+/* 攻撃の見込みの表：見出し・与える・反撃の3行。攻撃・防御・合計の数字（何人倒せるかは出さない） */
+.forecast-table { width: 100%; height: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.15; }
+.forecast-table th { width: 60px; text-align: left; font-weight: 800; white-space: nowrap; }
+.forecast-table td { text-align: center; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.forecast-table tr.head td { font-size: 11px; font-weight: 700; color: var(--text-dim); }
+.forecast-table td.total { font-weight: 800; color: var(--gold); }
+.forecast-table tr.braced th { color: #ffb36b; font-size: 12px; }
+.forecast-table td.none { text-align: left; padding-left: 10px; color: var(--text-dim); }
+.forecast-table small { display: block; font-size: 9px; line-height: 1; color: #ff9a94; }
+/* コマンドの枠（移動先を決めたあと、情報欄のかわりに出す）。攻撃は赤、祈るは緑、待機は灰色で、場所も色もはっきり分ける */
+#command-menu { flex: none; height: 74px; margin: 4px 6px 0; padding: 4px 6px 6px; border-radius: 10px;
+  border: 1px solid rgba(217,180,82,.55); background: linear-gradient(180deg, #232f4f, #161d33); animation: command-in .16s ease-out; }
+@keyframes command-in { from { opacity: 0; transform: translateY(6px); } }
+.command-title { height: 16px; font-size: 11px; font-weight: 700; letter-spacing: .1em; color: #c9a54a; text-align: center; }
+.command-list { display: flex; gap: 8px; height: calc(100% - 16px); }
+.command { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 8px; cursor: pointer;
+  border: 1px solid; color: #fff; font: inherit; font-size: 17px; font-weight: 800; letter-spacing: .1em; position: relative; }
+.command .command-icon { width: 20px; height: 20px; background: center / contain no-repeat; }
+.command.attack { background: linear-gradient(180deg, #c8463e, #8a2520); border-color: #f0a29c; }
+.command.attack .command-icon { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg stroke='%23fff' stroke-linecap='round' fill='none'%3E%3Cpath d='M4 4 L15 15' stroke-width='2.6'/%3E%3Cpath d='M12 18 L18 12' stroke-width='2.2'/%3E%3Cpath d='M16 16 L20.5 20.5' stroke-width='3'/%3E%3C/g%3E%3C/svg%3E"); }
+.command.prayer { background: linear-gradient(180deg, #2aa566, #17703f); border-color: #8ff0b4; }
+.command.prayer .command-icon { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='4.2'/%3E%3Cpath d='M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1'/%3E%3C/g%3E%3C/svg%3E"); }
+.command.wait { background: linear-gradient(180deg, #4a5570, #2d3550); border-color: #8a96b3; }
+.command.summon { background: linear-gradient(180deg, #4a6fb8, #23386e); border-color: #9fd8ff; }
+.command.summon .command-icon { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='9' fill='none' stroke='%23fff' stroke-width='1.8'/%3E%3Cpath d='M12 4.5 L18.5 16 H5.5 Z M12 19.5 L5.5 8 H18.5 Z' fill='none' stroke='%23fff' stroke-width='1.4' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+.command.brace { background: linear-gradient(180deg, #b0862a, #6e5112); border-color: #f2d58a; }
+.command.brace .command-icon { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2 L21 5 V11.5 C21 17 17 20.5 12 22.5 C7 20.5 3 17 3 11.5 V5 Z' fill='%23fff' stroke='%23fff' stroke-width='1.6' stroke-linejoin='round'/%3E%3Cpath d='M12 6 V18' stroke='%23fff' stroke-width='2'/%3E%3C/svg%3E"); }
+.command.wait .command-icon { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 3 L19.5 5.5 V11.5 C19.5 16 16.3 19.3 12 21 C7.7 19.3 4.5 16 4.5 11.5 V5.5 Z' fill='none' stroke='%23fff' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+.command:disabled { opacity: .35; cursor: default; filter: grayscale(.6); }
+.command small { position: absolute; bottom: 2px; left: 0; right: 0; font-size: 10px; font-weight: 600; letter-spacing: 0; text-align: center; }
+.command:disabled .command-label { margin-bottom: 8px; }
+.command:active:not(:disabled) { transform: translateY(1px); filter: brightness(1.2); }
+.button.invisible { visibility: hidden; }
+#guide-line { flex: none; height: 26px; padding: 0 10px; font-size: 14px; line-height: 26px; color: var(--gold);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
+#action-bar { flex: none; display: flex; gap: 6px; padding: 0 6px 6px; }
+#action-bar .button { flex: 1; min-height: 48px; padding: 0 4px; }
+
+/* 町を占領した演出（マップの上）：旗竿が伸び、旗が上がり、光が広がる */
+.capture-raise { position: absolute; left: 0; top: 0; width: var(--tile); height: var(--tile); pointer-events: none; z-index: 4;
+  transform: translate(calc(var(--tile) * var(--ux)), calc(var(--tile) * var(--uy))); }
+.capture-raise .pole { position: absolute; left: 46%; bottom: 18%; width: 3px; height: 0; background: #3a2a1a; box-shadow: 0 0 0 1px rgba(255,255,255,.5);
+  animation: capture-pole .35s ease-out forwards; }
+.capture-raise .flag { position: absolute; left: calc(46% + 3px); bottom: 18%; width: 40%; height: 26%; border: 1px solid #1a1423; opacity: 0;
+  animation: capture-flag .45s .25s ease-out forwards, capture-wave .4s .7s ease-in-out 2 alternate; transform-origin: left center; }
+.capture-raise.player .flag { background: var(--player); }
+.capture-raise.enemy .flag { background: var(--enemy); }
+.capture-raise .burst { position: absolute; inset: -40%; border-radius: 50%; opacity: 0;
+  background: radial-gradient(circle, rgba(255,240,180,.95) 0 18%, rgba(242,201,76,.5) 40%, rgba(242,201,76,0) 70%); animation: capture-burst .6s .4s ease-out forwards; }
+@keyframes capture-pole { to { height: 72%; } }
+@keyframes capture-flag { from { opacity: 1; bottom: 18%; } to { opacity: 1; bottom: 64%; } }
+@keyframes capture-wave { to { transform: skewY(-8deg) scaleX(.9); } }
+@keyframes capture-burst { 0% { opacity: 0; transform: scale(.3); } 30% { opacity: 1; } 100% { opacity: 0; transform: scale(1.2); } }
+.popup.capture span { font-size: 20px; letter-spacing: .08em; }
+
+/* 町を占領した場面（そのステージで最初の1回だけ） */
+#capture-scene { position: absolute; inset: 0; z-index: 25; display: flex; align-items: center; justify-content: center; background: rgba(6,9,15,.88); cursor: pointer; }
+#capture-box { width: 100%; animation: battle-in .22s ease-out; }
+#capture-stage { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: center bottom / cover no-repeat, linear-gradient(#6db7f2 0 55%, #9a8a76 55% 100%);
+  border-top: 3px solid var(--gold); border-bottom: 3px solid var(--gold); image-rendering: pixelated; }
+.capture-unit { position: absolute; left: 50%; bottom: 7%; width: 128px; height: 128px; margin-left: -40px; image-rendering: pixelated;
+  animation: capture-step .4s ease-out; filter: drop-shadow(0 3px 3px rgba(0,0,0,.5)); }
+@keyframes capture-step { from { transform: translateX(50px); opacity: 0; } }
+.capture-flag { position: absolute; left: calc(50% - 70px); bottom: 10%; width: 60px; height: 70%; }
+.capture-flag .pole { position: absolute; left: 0; bottom: 0; width: 5px; height: 0; background: linear-gradient(90deg, #5a3a1a, #8a5a2a); border: 1px solid #1a1423;
+  animation: capture-pole2 .45s .2s ease-out forwards; }
+.capture-flag .cloth svg { position: absolute; left: 50%; top: 50%; width: 30px; height: 20px; margin: -10px 0 0 -15px; }
+.capture-flag .cloth { position: absolute; left: 5px; bottom: 0; width: 56px; height: 38px; border: 2px solid #1a1423; opacity: 0; transform-origin: left center;
+  background: linear-gradient(135deg, #3d7ef0, #1b458f); box-shadow: inset 0 0 0 3px rgba(242,201,76,.7);
+  animation: capture-cloth .5s .55s ease-out forwards, capture-wave .45s 1.05s ease-in-out 3 alternate; }
+@keyframes capture-pole2 { to { height: 100%; } }
+@keyframes capture-cloth { from { opacity: 1; bottom: 0; } to { opacity: 1; bottom: calc(100% - 40px); } }
+.capture-light { position: absolute; inset: 0; pointer-events: none; opacity: 0;
+  background: radial-gradient(circle at 40% 30%, rgba(255,244,200,.85), rgba(255,244,200,0) 55%); animation: capture-light .7s 1s ease-out forwards; }
+@keyframes capture-light { 0% { opacity: 0; } 30% { opacity: 1; } 100% { opacity: 0; } }
+.capture-banner { position: relative; margin: -2px 8px 0; padding: 14px 10px 12px; text-align: center; border: 2px solid #d9b452; border-radius: 3px;
+  background: radial-gradient(ellipse at 50% 0%, rgba(80,110,200,.35), rgba(0,0,0,0) 70%), linear-gradient(180deg, #1c2856, #0b1024);
+  box-shadow: inset 0 0 0 3px #0b1024, inset 0 0 0 4px rgba(242,201,76,.45), 0 6px 16px rgba(0,0,0,.5); }
+.capture-crest { position: absolute; left: 50%; top: -9px; width: 14px; height: 14px; margin-left: -7px; transform: rotate(45deg);
+  background: linear-gradient(135deg, #ffe39a, #c9962e); border: 1px solid #5a4300; box-shadow: 0 0 8px rgba(242,201,76,.7); }
+.capture-title { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.capture-title b { font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; font-size: 30px; font-weight: 900; letter-spacing: .18em; text-indent: .18em; color: #ffe39a;
+  text-shadow: 0 2px 0 #7a5a10, 0 3px 0 #3a2a00, 0 0 14px rgba(242,201,76,.65); white-space: nowrap; animation: victory-title .6s 1.05s cubic-bezier(.2,1.6,.4,1) both; }
+.capture-flourish { flex: 1 1 0; max-width: 64px; height: 14px; animation: capture-fade .4s 1.2s ease-out both; }
+.capture-flourish.flip { transform: scaleX(-1); }
+.capture-banner span { display: block; margin-top: 6px; font-size: 13px; color: #e6dcc0; animation: capture-fade .4s 1.3s ease-out both; }
+.capture-banner em { font-style: normal; font-weight: 800; font-size: 15px; color: #ffe07a; }
+.capture-skip { padding: 9px 0; text-align: center; font-size: 13px; letter-spacing: .1em; color: var(--text-dim); }
+@keyframes capture-fade { from { opacity: 0; } }
+
+/* 絵を使う占領の場面：旗の無い絵の上で、切り抜いた旗が旗竿を上がり、上がりきったら槍を掲げた絵に切り替わる */
+#capture-stage.picture { aspect-ratio: 688 / 384; background: #6db7f2; }
+.capture-picture { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
+.capture-picture.before { animation: capture-zoom 1.1s ease-out both; transform-origin: 30% 60%; }
+.capture-picture.after { opacity: 0; animation: capture-show .12s 1.05s linear forwards; }
+@keyframes capture-zoom { from { transform: scale(1.06); } }
+@keyframes capture-show { to { opacity: 1; } }
+.capture-flag-picture { position: absolute; transform-origin: left top; animation: capture-raise-flag .8s .25s cubic-bezier(.45,.05,.35,1) both; }
+.capture-flag-picture img { display: block; width: 100%; height: 100%; image-rendering: pixelated; transform-origin: left center;
+  filter: drop-shadow(1px 2px 1px rgba(0,0,0,.25)); animation: capture-flag-wave .55s ease-in-out infinite alternate; }
+@keyframes capture-raise-flag { from { transform: translateY(124%) scaleX(.3); } 85% { transform: translateY(-3%) scaleX(1.02); } to { transform: none; } }
+@keyframes capture-flag-wave { from { transform: skewY(0deg) scaleX(1); } to { transform: skewY(-2.5deg) scaleX(.96); } }
+#capture-stage.picture .capture-light { background: radial-gradient(circle at 34% 24%, rgba(255,244,200,.9), rgba(255,244,200,0) 50%); animation-delay: 1.02s; }
+.capture-sparkles i { position: absolute; width: 10px; height: 10px; opacity: 0; transform: rotate(45deg) scale(.3);
+  background: radial-gradient(circle, #fffbe6 0 30%, #ffd75a 45%, rgba(255,215,90,0) 72%); animation: capture-twinkle .9s ease-out forwards; }
+.capture-sparkles i:nth-child(1) { left: 30%; top: 12%; animation-delay: 1.1s; }
+.capture-sparkles i:nth-child(2) { left: 52%; top: 30%; animation-delay: 1.25s; }
+.capture-sparkles i:nth-child(3) { left: 22%; top: 46%; animation-delay: 1.35s; }
+.capture-sparkles i:nth-child(4) { left: 62%; top: 58%; animation-delay: 1.15s; }
+.capture-sparkles i:nth-child(5) { left: 44%; top: 8%; animation-delay: 1.45s; }
+.capture-sparkles i:nth-child(6) { left: 14%; top: 22%; animation-delay: 1.55s; }
+@keyframes capture-twinkle { 0% { opacity: 0; transform: rotate(45deg) scale(.3); } 35% { opacity: 1; transform: rotate(45deg) scale(1.4); } 100% { opacity: 0; transform: rotate(45deg) scale(.6) translateY(-6px); } }
+
+/* 雇う画面（城の広間）：上に広間と側近、下に部隊の札 */
+#hire-scene { position: absolute; inset: 0; z-index: 26; display: flex; align-items: center; justify-content: center; padding: 10px;
+  background: rgba(6,9,15,.88); }
+#hire-box { width: 100%; max-width: 420px; border-radius: 6px; overflow: hidden; border: 1px solid #d9b452;
+  background: linear-gradient(180deg, #1e2a52, #0b1024); box-shadow: inset 0 0 0 4px rgba(11,16,36,.9), inset 0 0 0 5px rgba(242,201,76,.4), 0 16px 36px rgba(0,0,0,.6);
+  animation: stage-rise .25s ease-out; }
+#hire-stage { position: relative; aspect-ratio: 16 / 7; background: center bottom / cover no-repeat, linear-gradient(180deg, #4a3a2a 0%, #6b4f33 55%, #3a2c22 56%, #2a2019 100%);
+  border-bottom: 2px solid var(--gold); image-rendering: pixelated; }
+.hire-aide { position: absolute; left: 6%; bottom: 4%; width: 33%; aspect-ratio: 1; }
+.hire-aide img { width: 100%; height: 100%; image-rendering: pixelated; filter: drop-shadow(0 3px 3px rgba(0,0,0,.6)); }
+.hire-aide-placeholder { width: 70%; height: 90%; margin: 10% auto 0; border-radius: 40% 40% 12px 12px; display: flex; align-items: center; justify-content: center;
+  background: rgba(20,24,40,.7); border: 2px dashed rgba(242,201,76,.6); color: #e6dcc0; font-size: 12px; font-weight: 700; }
+.hire-speech { position: absolute; right: 5%; top: 14%; width: 54%; padding: 10px 12px; border-radius: 10px; border: 2px solid #d9b452;
+  background: rgba(255,250,235,.95); color: #2a1d00; font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; font-size: 16px; font-weight: 800; line-height: 1.35; }
+.hire-speech::before { content: ""; position: absolute; left: -12px; bottom: 16px; border: 8px solid transparent; border-right-color: #d9b452; }
+.hire-speech em { display: block; margin-top: 3px; font-style: normal; font-size: 12px; font-weight: 700; color: #8a5a14; }
+.hire-speech small { display: block; margin-top: 4px; font-family: -apple-system, "Hiragino Sans", sans-serif; font-size: 12px; font-weight: 700; color: #6e5112; }
+.hire-speech small b { font-size: 15px; color: #2a1d00; }
+#hire-list { display: flex; flex-direction: column; gap: 7px; padding: 10px 12px; }
+.hire-card { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 62px; padding: 6px 10px; border-radius: 4px; text-align: left; cursor: pointer;
+  border: 1px solid rgba(217,180,82,.6); color: #fff6dc; font: inherit; background: linear-gradient(90deg, rgba(44,62,118,.9), rgba(16,23,50,.92)); }
+.hire-card:active:not(:disabled) { transform: translateY(1px); filter: brightness(1.2); }
+.hire-card:disabled { opacity: .45; filter: grayscale(.6); cursor: default; }
+.hire-art { flex: none; width: 58px; height: 58px; }
+.hire-art img { width: 100%; height: 100%; image-rendering: pixelated; }
+.hire-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.hire-name { font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; font-size: 18px; font-weight: 800; color: #fff3cf; }
+.hire-name small { margin-left: 6px; font-family: -apple-system, "Hiragino Sans", sans-serif; font-size: 11px; color: #c9a54a; }
+.hire-desc { font-size: 12px; color: #c8cfdf; }
+.hire-note { font-size: 11px; font-weight: 700; color: #ff9a94; }
+.hire-cost { flex: none; padding: 6px 10px; border-radius: 3px; border: 1px solid #d9b452; font-size: 18px; font-weight: 800; color: #2a1d00;
+  background: linear-gradient(180deg, #fff1b8, #e3b24a); }
+.hire-cost small { font-size: 11px; }
+/* 雇える部隊が5種類以上のとき：札を低くし、説明は1行にして、縦に動かさずに収める */
+#hire-box.compact #hire-stage { aspect-ratio: 16 / 6; }
+#hire-box.compact #hire-list { gap: 5px; padding: 8px 10px; }
+#hire-box.compact .hire-card { min-height: 48px; padding: 3px 8px; }
+#hire-box.compact .hire-art { width: 42px; height: 42px; }
+#hire-box.compact .hire-name { font-size: 16px; }
+#hire-box.compact .hire-desc { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#hire-box.compact .hire-cost { padding: 4px 8px; font-size: 16px; }
+#hire-box.compact .hire-cancel { margin-bottom: 10px; min-height: 40px; }
+.hire-cancel { display: block; margin: 0 auto 14px; min-height: 42px; padding: 0 28px; border-radius: 3px; border: 1px solid rgba(217,180,82,.45); cursor: pointer;
+  background: transparent; color: #d8cfb4; font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; font-size: 15px; font-weight: 700; letter-spacing: .3em; text-indent: .3em; }
+
+/* 戦闘シーン */
+#battle-scene { position: absolute; inset: 0; z-index: 25; display: flex; align-items: center; justify-content: center;
+  background: rgba(6,9,15,.88); cursor: pointer; }
+#battle-box { width: 100%; animation: battle-in .22s ease-out; }
+@keyframes battle-in { from { opacity: 0; transform: scaleY(.6); } }
+#battle-stage { position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden;
+  background: linear-gradient(#6db7f2 0 52%, #5a9a44 52% 100%); background-size: cover; background-position: center bottom;
+  image-rendering: pixelated; border-top: 3px solid var(--gold); border-bottom: 3px solid var(--gold); }
+/* 背景：1枚目を全面に敷き、左右で地形が違うときは2枚目を右半分だけ見せる（境目は斜め） */
+.battle-bg { position: absolute; inset: 0; background-size: cover; background-position: center bottom; image-rendering: pixelated; }
+.battle-bg.right { clip-path: polygon(54% 0, 100% 0, 100% 100%, 46% 100%); }
+.battle-bg-divider { position: absolute; inset: 0; background: rgba(255,248,225,.85);
+  clip-path: polygon(53.6% 0, 54.4% 0, 46.4% 100%, 45.6% 100%); }
+.battle-terrain { position: absolute; z-index: 7; top: 6px; padding: 2px 9px; border-radius: 10px; font-size: 12px; font-weight: 700;
+  color: #fff; background: rgba(10,14,28,.62); }
+.battle-terrain.left { left: 6px; }
+.battle-terrain.right { right: 6px; }
+/* 兵士1人分の絵。位置と大きさは、部隊の人数に合わせてプログラムが決める */
+.fighter { position: absolute; transition: transform .1s ease-out, opacity .35s; }
+.fighter img, .fighter-fallback { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+.fighter-fallback svg { width: 100%; height: 100%; }
+.fighter.left.lunge { transform: translateX(26px); }
+.fighter.right.lunge { transform: translateX(-26px); }
+.fighter.left.shoot { transform: translateX(-6px); }
+.fighter.right.shoot { transform: translateX(6px); }
+.fighter.hit img, .fighter.hit .fighter-fallback { animation: battle-hit .3s linear; }
+.fighter.wounded img, .fighter.wounded .fighter-fallback { opacity: .72; filter: saturate(.6); }
+.fighter.fallen { opacity: 0; transform: translateY(12px); }
+@keyframes battle-hit { 0%, 40% { filter: brightness(3); } 20% { transform: translateX(-5px); } 60% { transform: translateX(5px); } 80% { transform: translateX(-2px); } }
+.battle-note { position: absolute; left: 50%; top: -4px; transform: translateX(-50%); white-space: nowrap; pointer-events: none;
+  font-size: 13px; font-weight: 800; color: #dfe6f0; text-shadow: 0 0 3px #000, 0 1px 0 #000, 1px 0 0 #000, -1px 0 0 #000; }
+.battle-arrow { position: absolute; bottom: 26%; z-index: 6; width: 26px; height: 3px; background: #5a3a1a; box-shadow: 0 0 0 1px #1a1423; pointer-events: none; }
+.battle-arrow::after { content: ""; position: absolute; top: -4px; border: 6px solid transparent; }
+.battle-arrow.left { left: 30%; animation: arrow-right .11s linear forwards; }
+.battle-arrow.left::after { right: -10px; border-left-color: #dfe6f0; border-right: 0; }
+.battle-arrow.right { right: 30%; animation: arrow-left .11s linear forwards; }
+.battle-arrow.right::after { left: -10px; border-right-color: #dfe6f0; border-left: 0; }
+@keyframes arrow-right { to { left: 76%; } }
+@keyframes arrow-left { to { right: 76%; } }
+.battle-popup { position: absolute; bottom: 58%; z-index: 7; width: 44%; text-align: center; pointer-events: none; font-size: 30px; font-weight: 900; color: #fff;
+  text-shadow: 0 0 4px #000, 0 2px 0 #000, 2px 0 0 #000, -2px 0 0 #000, 0 -2px 0 #000; animation: battle-popup .7s ease-out forwards; }
+.battle-popup.left { left: 0; }
+.battle-popup.right { right: 0; }
+.battle-popup.crit { color: var(--gold); font-size: 36px; }
+.battle-popup.miss { color: #dfe6f0; font-size: 24px; }
+.battle-popup span, .battle-popup small { display: block; }
+.battle-popup small { font-size: 15px; }
+@keyframes battle-popup { 0% { opacity: 0; transform: translateY(14px); } 20% { opacity: 1; transform: none; } 100% { opacity: 1; transform: translateY(-10px); } }
+#battle-label { position: absolute; z-index: 7; top: 8px; left: 0; right: 0; text-align: center; font-size: 18px; font-weight: 800; color: #fff;
+  text-shadow: 0 0 4px #000, 0 2px 0 #000; letter-spacing: .1em; }
+#battle-flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+#battle-flash.on { animation: battle-flash .3s ease-out; }
+@keyframes battle-flash { from { opacity: .75; } to { opacity: 0; } }
+#battle-status { display: flex; gap: 2px; background: #0b0f17; }
+.battle-hp { flex: 1; min-width: 0; padding: 8px 12px 10px; background: var(--panel); font-size: 15px; }
+.battle-hp.right { text-align: right; }
+.battle-hp .who { font-weight: 800; }
+.battle-hp .player-text { color: #8fb6ff; }
+.battle-hp .enemy-text { color: #ff9a94; }
+.battle-hp .bar { height: 5px; margin: 4px 0 0; border-radius: 5px; background: #0b0f17; overflow: hidden; }
+.battle-hp .bar i { display: block; height: 100%; width: 100%; background: #37b85a; transition: width .35s ease-out; }
+.battle-hp.right .bar i { margin-left: auto; }
+.battle-hp .bar i.mid { background: #d1a11a; }
+.battle-hp .bar i.low { background: #d03a3a; }
+.battle-hp .num { font-size: 15px; color: var(--text); }
+.battle-hp .num b { font-size: 26px; line-height: 1.1; }
+.battle-hp .num span { font-size: 12px; color: var(--text-dim); }
+#battle-skip { padding: 8px 0; text-align: center; font-size: 13px; color: var(--text-dim); }
+
+/* お知らせ（一度だけ出るヒント） */
+#toast { pointer-events: none; position: absolute; left: 10px; right: 10px; top: calc(var(--safe-top) + 54px); z-index: 20; padding: 10px 14px;
+  border-radius: 12px; background: rgba(250,246,230,.97); color: #2a2410; font-size: 15px; line-height: 1.5; font-weight: 600;
+  box-shadow: 0 4px 14px rgba(0,0,0,.5); border-left: 6px solid var(--gold); animation: toast-in .25s ease-out; }
+@keyframes toast-in { from { opacity: 0; transform: translateY(-8px); } }
+
+/* 確認や結果の窓 */
+#modal { position: absolute; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center;
+  padding: 16px; background: rgba(6,9,15,.72); overflow: hidden; }
+#modal-effects { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+/* 窓：タイトルと同じ、紺の地に金の二重の縁。ボタンも明朝体の金の縁 */
+#modal-box { position: relative; width: 100%; max-width: 360px; max-height: 88%; display: flex; flex-direction: column;
+  padding: 20px 16px 16px; border-radius: 6px; border: 1px solid #d9b452; background: linear-gradient(180deg, #1e2a52, #0b1024);
+  box-shadow: inset 0 0 0 4px rgba(11,16,36,.95), inset 0 0 0 5px rgba(242,201,76,.4), 0 16px 36px rgba(0,0,0,.6); animation: modal-in .2s ease-out; }
+@keyframes modal-in { from { opacity: 0; transform: scale(.94); } }
+#modal-title { margin: 0 0 10px; text-align: center; font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; font-size: 20px; font-weight: 800;
+  letter-spacing: .08em; color: #fff3cf; text-shadow: 0 2px 0 #000; }
+#modal-body { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y;
+  font-size: 15px; line-height: 1.7; white-space: pre-line; color: #e9e2cc; }
+#modal-body h3 { margin: 12px 0 2px; font-size: 15px; color: var(--gold); font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; }
+#modal-body p { margin: 0 0 6px; }
+#modal-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+#modal-buttons .button { flex: 1 1 40%; min-height: 50px; border-radius: 4px; border: 1px solid rgba(217,180,82,.55); color: #f4ead0;
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; font-size: 16px; font-weight: 800; letter-spacing: .12em;
+  background: linear-gradient(180deg, rgba(44,62,118,.9), rgba(16,23,50,.95)); box-shadow: inset 0 0 0 3px rgba(11,16,36,.7), inset 0 0 0 4px rgba(242,201,76,.16); }
+#modal-buttons .button.primary { border-color: #e9c35c; color: #fff6dc;
+  box-shadow: inset 0 0 0 3px rgba(11,16,36,.85), inset 0 0 0 4px rgba(242,201,76,.55), inset 0 14px 16px -12px rgba(255,255,255,.25), 0 0 14px rgba(242,201,76,.35); }
+#modal-buttons .button.danger { border-color: #ef8a84; background: linear-gradient(180deg, #a83a34, #5e1a17); }
+#modal-buttons.stacked .button { flex: 1 1 100%; }
+
+/* 勝利・敗北：大きな題字の左右に細い線、結果を札にまとめる */
+#modal.victory #modal-box { box-shadow: inset 0 0 0 4px rgba(11,16,36,.95), inset 0 0 0 5px rgba(242,201,76,.6), 0 0 40px rgba(242,201,76,.45), 0 16px 36px rgba(0,0,0,.6); }
+#modal.victory #modal-title, #modal.defeat #modal-title { display: flex; align-items: center; justify-content: center; gap: 12px;
+  font-size: 40px; letter-spacing: .3em; text-indent: .3em; line-height: 1.2; }
+#modal.victory #modal-title { color: #ffe39a; text-shadow: 0 2px 0 #5a4300, 0 0 4px rgba(0,0,0,.8), 0 0 16px rgba(242,201,76,.6);
+  animation: victory-title .6s cubic-bezier(.2,1.6,.4,1); }
+#modal.defeat #modal-title { color: #dfe6f2; text-shadow: 0 2px 0 #1a1f2c, 0 0 4px rgba(0,0,0,.8), 0 0 16px rgba(150,170,210,.55);
+  animation: defeat-title .8s ease-out; }
+@keyframes defeat-title { from { opacity: 0; transform: translateY(-10px); letter-spacing: .6em; } }
+#modal.victory #modal-title::before, #modal.victory #modal-title::after, #modal.defeat #modal-title::before, #modal.defeat #modal-title::after {
+  content: ""; flex: 0 0 40px; height: 1px; }
+#modal.victory #modal-title::before { background: linear-gradient(90deg, transparent, #f2c94c); }
+#modal.victory #modal-title::after { background: linear-gradient(90deg, #f2c94c, transparent); margin-left: -.3em; }
+#modal.defeat #modal-title::before { background: linear-gradient(90deg, transparent, #8a93a8); }
+#modal.defeat #modal-title::after { background: linear-gradient(90deg, #8a93a8, transparent); margin-left: -.3em; }
+#modal.defeat #modal-box { border-color: #9aa6c0; background: linear-gradient(180deg, #232a40, #0c0f1c);
+  box-shadow: inset 0 0 0 4px rgba(11,16,36,.95), inset 0 0 0 5px rgba(170,185,215,.45), 0 0 40px rgba(120,140,190,.35), 0 16px 36px rgba(0,0,0,.6); }
+#modal.defeat .result-stats > div { border-color: rgba(170,185,215,.4); }
+#modal.defeat .result-stats span, #modal.defeat .result-hint span { color: #a9b6d3; }
+#modal.defeat .result-hint { margin-top: 10px; }
+#modal.defeat #modal-buttons .button { border-color: rgba(170,185,215,.5); }
+#modal.defeat #modal-buttons .button.primary { border-color: #c9d4ee; box-shadow: inset 0 0 0 3px rgba(11,16,36,.85), inset 0 0 0 4px rgba(200,212,238,.5), 0 0 14px rgba(150,170,210,.35); }
+.result { white-space: normal; }
+.result-lead { margin: 0 0 12px !important; text-align: center; font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; font-size: 17px; font-weight: 800; color: #fff3cf; }
+.result-stats { display: flex; gap: 8px; }
+.result-stats > div { position: relative; flex: 1; padding: 8px 6px 6px; border-radius: 4px; text-align: center;
+  border: 1px solid rgba(217,180,82,.45); background: rgba(11,16,36,.55); }
+.result-stats span { display: block; font-size: 11px; font-weight: 700; letter-spacing: .08em; color: #c9a54a; }
+.result-stats b { font-size: 30px; line-height: 1.15; color: #fff3cf; font-variant-numeric: tabular-nums; }
+.result-stats small { margin-left: 2px; font-size: 12px; color: #e6dcc0; }
+.result-stats em { position: absolute; top: -9px; right: -6px; padding: 1px 7px; border-radius: 3px; font-style: normal; font-size: 11px; font-weight: 800;
+  color: #2a1d00; background: linear-gradient(180deg, #fff1b8, #e3b24a); box-shadow: 0 2px 4px rgba(0,0,0,.5); }
+.result-hint { padding: 10px 12px; border-radius: 4px; border: 1px solid rgba(160,170,190,.4); background: rgba(11,16,36,.55); font-size: 14px; line-height: 1.6; }
+.result-hint span { display: block; margin-bottom: 2px; font-size: 11px; font-weight: 800; letter-spacing: .2em; color: #c9a54a; }
+@keyframes victory-title { from { transform: scale(2.2); opacity: 0; } }
+.confetti { position: absolute; top: -12px; width: 9px; height: 14px; opacity: .95; animation: confetti-fall linear forwards; }
+@keyframes confetti-fall { to { transform: translateY(110vh) rotate(720deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .unit.ready .unit-body, .tile.target::after, .tile.ally::after, .stage-card.next, #modal.defeat #modal-title, .unit.blessed .unit-body, .title-button.primary, .title-tap, .unit .pips i.doomed { animation: none; }
+  .confetti { display: none; }
+}

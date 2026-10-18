@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="セルトリア戦記">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#161c28">
+  <meta name="format-detection" content="telephone=no">
+  <title>セルトリア戦記 SELTRIA CHRONICLES</title>
+  <link rel="stylesheet" href="css/style.css?v=20261018o">
+</head>
+<body>
+  <div id="app">
+    <section id="title-screen" class="screen waiting">
+      <div id="title-background"></div>
+      <div id="title-shade"></div>
+      <button type="button" id="sound-button"></button>
+      <div class="title-top">
+        <div class="title-crest" id="title-crest"></div>
+        <h1 class="title-name">セルトリア戦記</h1>
+        <p class="title-sub">SELTRIA CHRONICLES</p>
+      </div>
+      <div class="title-bottom">
+        <p class="title-tap">画面をタップ</p>
+        <p class="title-record" id="title-record"></p>
+        <button type="button" class="title-button primary hidden" id="resume-button">続きから</button>
+        <button type="button" class="title-button primary" id="start-button">はじめる</button>
+        <button type="button" class="title-button" id="title-help-button">遊び方</button>
+      </div>
+      <!-- ステージを選ぶ画面（「はじめる」で開く） -->
+      <div id="stage-select" class="hidden">
+        <div class="stage-panel">
+          <p class="stage-eyebrow">CAMPAIGN</p>
+          <h2 class="stage-heading">出陣する戦場を選べ</h2>
+          <div id="stage-list"></div>
+          <div id="stage-pager">
+            <button type="button" class="stage-arrow prev" id="stage-prev" aria-label="前の章"></button>
+            <div id="stage-dots"></div>
+            <button type="button" class="stage-arrow next" id="stage-next" aria-label="次の章"></button>
+          </div>
+          <button type="button" class="stage-back" id="stage-back-button">もどる</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="game-screen" class="screen hidden">
+      <header id="top-bar">
+        <div id="turn-label"></div>
+        <button type="button" class="button small" id="goal-button">勝利条件</button>
+        <button type="button" class="button small" id="menu-button" aria-label="メニュー">≡</button>
+      </header>
+      <div id="board-area">
+        <div id="board-wrap">
+          <div id="board">
+            <div id="tiles"></div>
+            <div id="units"></div>
+            <div id="effects"></div>
+          </div>
+        </div>
+        <div class="board-shade top"></div>
+        <div class="board-shade bottom"></div>
+        <div class="board-shade left"></div>
+        <div class="board-shade right"></div>
+        <div id="banner" class="hidden"></div>
+        <button type="button" class="hidden" id="overview-button" aria-label="全体の図">全体</button>
+      </div>
+      <div id="info-panel"></div>
+      <div id="command-menu" class="hidden"></div>
+      <div id="guide-line"></div>
+      <footer id="action-bar">
+        <button type="button" class="button" id="undo-button">やり直す</button>
+        <button type="button" class="button primary" id="confirm-button">待機</button>
+        <button type="button" class="button" id="end-turn-button">ターン終了</button>
+      </footer>
+    </section>
+
+    <div id="battle-scene" class="hidden"></div>
+    <div id="hire-scene" class="hidden"></div>
+    <div id="capture-scene" class="hidden"></div>
+    <div id="overview" class="hidden"></div>
+    <!-- 出陣の準備（ステージ11から。正規部隊のあるステージを選んだときに出す） -->
+    <div id="prep-select" class="hidden">
+      <div class="stage-panel prep-panel">
+        <p class="stage-eyebrow">PREPARATION</p>
+        <h2 class="stage-heading">出陣の準備</h2>
+        <p class="prep-lead" id="prep-lead"></p>
+        <div id="prep-list"></div>
+        <button type="button" class="title-button primary prep-go" id="prep-go">出陣する</button>
+        <button type="button" class="stage-back" id="prep-back">もどる</button>
+      </div>
+    </div>
+
+    <div id="toast" class="hidden" role="status"></div>
+
+    <div id="modal" class="hidden">
+      <div id="modal-effects"></div>
+      <div id="modal-box" role="dialog" aria-modal="true">
+        <h2 id="modal-title"></h2>
+        <div id="modal-body"></div>
+        <div id="modal-buttons"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/data/terrain.js?v=20261018o"></script>
+  <script src="js/data/units.js?v=20261018o"></script>
+  <script src="js/data/regulars.js?v=20261018o"></script>
+  <script src="js/data/stages.js?v=20261018o"></script>
+  <script src="js/data/assets.js?v=20261018o"></script>
+  <script src="js/rules/movement.js?v=20261018o"></script>
+  <script src="js/rules/combat.js?v=20261018o"></script>
+  <script src="js/rules/prayer.js?v=20261018o"></script>
+  <script src="js/rules/economy.js?v=20261018o"></script>
+  <script src="js/rules/regulars.js?v=20261018o"></script>
+  <script src="js/rules/game.js?v=20261018o"></script>
+  <script src="js/rules/ai.js?v=20261018o"></script>
+  <script src="js/save.js?v=20261018o"></script>
+  <script src="js/ui/sound.js?v=20261018o"></script>
+  <script src="js/ui/render.js?v=20261018o"></script>
+  <script src="js/ui/screens.js?v=20261018o"></script>
+  <script src="js/ui/battle-scene.js?v=20261018o"></script>
+  <script src="js/ui/hire-scene.js?v=20261018o"></script>
+  <script src="js/ui/capture-scene.js?v=20261018o"></script>
+  <script src="js/ui/overview.js?v=20261018o"></script>
+  <script src="js/ui/input.js?v=20261018o"></script>
+  <script src="js/main.js?v=20261018o"></script>
+</body>
+</html>
