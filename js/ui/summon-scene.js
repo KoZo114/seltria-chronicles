@@ -3,9 +3,9 @@
 // ルールの計算はしない。js/rules が決めた1人ずつの成否（event.rolls）を順番に見せるだけ。タップでいつでも飛ばせる。
 (function (root) {
   var SC = (root.SC = root.SC || {});
-  var START_MS = 380;    // 魔法陣が光り始めるまで
-  var STEP_MS = 190;     // 魔法陣を1つずつ試す間隔
-  var RESULT_MS = 650;   // 結果の文字を見せる時間
+  var START_MS = 550;    // 魔法陣が光り始めるまで
+  var STEP_MS = 270;     // 魔法陣を1つずつ試す間隔
+  var RESULT_MS = 950;   // 結果の文字を見せる時間
 
   function getBattleArt(typeId, side) {
     var battle = (SC.ASSETS && SC.ASSETS.battle) || { units: {} };
