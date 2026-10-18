@@ -86,6 +86,7 @@
         castle_enemy: 'assets64/battle/bg_castle_enemy.png',
         town: 'assets64/battle/bg_town.png',
         fort: 'assets64/battle/bg_castle.png',              // 砦：城の背景を使う
+        summon: 'assets64/battle/bg_summon.png',            // 召喚の場面（無ければ森の背景）
         fort_enemy: 'assets64/battle/bg_castle_enemy.png',
         fallback: 'assets64/battle/bg_plain.png'
       },

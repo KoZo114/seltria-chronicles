@@ -221,16 +221,20 @@
     if (error) return { ok: false, error: error };
     var summon = SC.UNIT_TYPES[unit.type].summon;
     var type = SC.UNIT_TYPES[typeId];
-    var successes = 0;
-    for (var i = 0; i < type.size; i++) {
-      if (state.rng() * 100 < summon.chancePercent) successes += 1;
+    // 1人ずつ順番に試す。最大の人数に届いたら、そこでやめる（残りを試しても結果は同じ）。
+    // rolls：1人ずつの成否（召喚の場面で、魔法陣を1つずつ光らせるのに使う）
+    var rolls = [];
+    var soldiers = 0;
+    for (var i = 0; i < type.size && soldiers < summon.maxSoldiers; i++) {
+      var success = state.rng() * 100 < summon.chancePercent;
+      rolls.push(success);
+      if (success) soldiers += 1;
     }
-    var soldiers = Math.min(successes, summon.maxSoldiers);
     var events = [];
     unit.acted = true;
     unit.justHired = false;
     if (soldiers === 0) {
-      events.push({ type: 'summon', unitId: unit.id, x: tile.x, y: tile.y, soldiers: 0, unitType: typeId });
+      events.push({ type: 'summon', unitId: unit.id, x: tile.x, y: tile.y, soldiers: 0, unitType: typeId, rolls: rolls, side: unit.side, casterType: unit.type });
       return { ok: true, events: events };
     }
     state.nextUnitNumber = (state.nextUnitNumber || state.units.length) + 1;
@@ -240,7 +244,7 @@
       facing: unit.side === 'enemy' ? 'down' : 'up'
     };
     state.units.push(summoned);
-    events.push({ type: 'summon', unitId: unit.id, summonedId: summoned.id, x: tile.x, y: tile.y, soldiers: soldiers, unitType: typeId });
+    events.push({ type: 'summon', unitId: unit.id, summonedId: summoned.id, x: tile.x, y: tile.y, soldiers: soldiers, unitType: typeId, rolls: rolls, side: unit.side, casterType: unit.type });
     if (state.experience && unit.regularId) {
       // 召喚1回の成功で SC.EXPERIENCE.perSummon 点（人数ぶんにすると、毎ターン呼ぶだけで1ステージ25点ほどたまり、育ちすぎた）
       unit.exp = (unit.exp || 0) + SC.EXPERIENCE.perSummon;

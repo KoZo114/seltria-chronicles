@@ -597,7 +597,11 @@
       return previous.then(function () { return SC.Render.animatePrayer(event, unitTypeById[event.targetId]); });
     }, chain);
     chain = summons.reduce(function (previous, event) {
-      return previous.then(function () { return SC.Render.animateSummon(state, event); });
+      return previous.then(function () {
+        // 召喚の場面（戦闘シーンをオフにしていれば出さない）→ マップで魔法陣が光って部隊が現れる
+        var scene = options.save.settings.battleScene && event.rolls ? SC.SummonScene.play(event) : Promise.resolve();
+        return scene.then(function () { return SC.Render.animateSummon(state, event); });
+      });
     }, chain);
     chain = hires.reduce(function (previous, event) {
       return previous.then(function () { return SC.Render.animateHire(state, event); });
