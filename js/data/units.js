@@ -28,7 +28,7 @@
     cleric: {
       name: '僧侶', size: 6, soldierHp: 4, attack: 1, defense: 0, move: 3,
       rangeMin: 1, rangeMax: 1, moveType: 'ground', isKing: false, family: 'healer',
-      // 祈り：隣の味方の部隊のうち、最大人数が targetSizes のどれかの部隊の、倒れた兵士を戻す（僧侶は6人隊だけ）。
+      // 祈り：隣の味方の部隊のうち、最大人数が targetSizes のどれかの部隊の、倒れた兵士を戻す（僧侶は6人隊だけ。王は祈りで戻らない）。
       // 戻す人数 ＝ 僧侶の残り人数 ÷ stillDivisor（動かずに祈る）または ÷ movedDivisor（移動してから祈る）。端数は切り上げ
       prayer: { stillDivisor: 2, movedDivisor: 3, targetSizes: [6] },
       cost: 70,
@@ -45,8 +45,10 @@
     priest: {
       name: 'プリースト', size: 6, soldierHp: 5, attack: 1, defense: 0, move: 3,
       rangeMin: 1, rangeMax: 1, moveType: 'ground', isKing: false, family: 'healer',
-      prayer: { stillDivisor: 1.5, movedDivisor: 2, targetSizes: [6] },
-      description: '僧侶のランクアップ。祈りで戻せる兵士が増える。'
+      // 6人隊に戻す人数は僧侶と同じ。3人隊（騎士・グリフォンなど。王は除く）にも祈れて、1人戻す（2026-10-19 ユーザーの希望）
+      // heavyAmount：3人隊に祈ったときに戻す人数（動いても同じ）
+      prayer: { stillDivisor: 2, movedDivisor: 3, targetSizes: [6, 3], heavyAmount: 1 },
+      description: '僧侶のランクアップ。6人隊に加えて、3人隊（騎士・グリフォンなど）にも祈って1人戻せる。'
     },
     // 騎士（ステージ7から）：馬に乗った重装隊。足が速く、斜め前からも攻撃できる。森は苦手
     cavalry: {
@@ -72,6 +74,21 @@
       summon: { types: ['skeleton'], maxSoldiers: 3, chancePercent: 50 },
       cost: 80,
       description: '隣にも2マス先にも魔法が届く。動く前なら、隣にスケルトンを召喚できる。打たれ弱い。'
+    },
+    // ウィザード（ステージ14から。魔法使いのランクアップ。正規部隊だけがなれる）：攻撃が上がり、召喚が成功しやすく、ゴーレムも呼べる
+    // summon.byType：呼ぶものごとに、最大人数と成功率を変えるとき（書いていないものは maxSoldiers・chancePercent）
+    wizard: {
+      name: 'ウィザード', size: 6, soldierHp: 5, attack: 4, defense: 0, move: 3,
+      rangeMin: 1, rangeMax: 2, moveType: 'ground', isKing: false, family: 'magic',
+      summon: { types: ['skeleton', 'golem'], maxSoldiers: 4, chancePercent: 70, byType: { golem: { maxSoldiers: 2, chancePercent: 50 } } },
+      description: '魔法使いのランクアップ。魔法が強く、スケルトンを呼びやすい。岩の巨人ゴーレムも呼べる。'
+    },
+    // ゴーレム（ステージ14から）：召喚で現れる岩の巨人。硬くて遅い壁。魔法に弱い。補充や祈りでは戻らず、町も占領できない
+    golem: {
+      name: 'ゴーレム', size: 3, soldierHp: 12, attack: 4, defense: 2, move: 2,
+      rangeMin: 1, rangeMax: 1, moveType: 'ground', isKing: false, family: 'large',
+      noRestore: true,
+      description: '召喚で現れる岩の巨人。とても硬いが足が遅い。魔法に弱い。補充や祈りでは戻らない。'
     },
     // スケルトン（ステージ12から）：召喚で現れる不死の兵。補充や祈りでは戻らず、町も占領できない。回復系に弱い
     skeleton: {

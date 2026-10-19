@@ -641,6 +641,60 @@
         { type: 'harpy', side: 'enemy', x: 2, y: 3 },
         { type: 'harpy', side: 'enemy', x: 10, y: 3 }
       ]
+    },
+    // ステージ14（2026-10-19 合意）：ゴーレムの壁。敵のウィザードが、水路を渡る細い道をゴーレムで塞ぐ。
+    // 崩し方は、魔法（ゴーレムは魔法に弱い）・空から越える（ワイバーンを雇える）・騎士でウィザードを突く
+    14: {
+      id: 14,
+      title: 'ステージ14　魔導の都',
+      intro: '竜の峰を越えた王の軍は、水路の巡る古い魔導の都の跡にたどり着いた。水路を渡る細い道を、岩でできた巨人が塞いでいる。「あれは、ゴーレム……魔導士たちが岩に命を吹き込んだものです」ノエルが杖を握りしめた。',
+      newRule: 'golem',
+      ruleNote: '新しい決まり：ゴーレムとウィザード\n敵のウィザードは、硬い岩の巨人「ゴーレム」を呼んで道を塞ぎます。ゴーレムは魔法に弱く（相性+2）、足が遅い。空を飛ぶ部隊なら水路を越えられます。このステージから、ワイバーン（120G）を雇えます。魔法使いのノエル隊は、経験値が満タンになるとウィザードにランクアップし、ゴーレムを呼べるようになります。',
+      goalText: '勝利：敵の王を倒す\n敗北：自軍の王が倒される',
+      defeatHint: 'ゴーレムを正面から殴ると時間がかかります。魔法使いで崩すか、ワイバーンやハーピーで水路を越えて、奥のウィザードを先に倒そう。騎士は魔法使いに強いです。',
+      rules: { zoneOfControl: true, economy: true, affinity: true, experience: true, maxUnits: 10, incomeScale: { enemy: 0.5 }, hireTypes: ['infantry', 'archer', 'cleric', 'cavalry', 'harpy', 'griffin', 'wyvern', 'mage'] },
+      gold: { player: 60, enemy: 80 },
+      music: 'map',
+      battleMusic: null,
+      bossMusic: 'boss',
+      map: [
+        '..F..C....F.',
+        '.T..F..F..T.',
+        '............',
+        'F..F....F..F',
+        '...T....T...',
+        'W..WW.WWW..W',
+        'W..WW.WWW..W',
+        '............',
+        '.F..F..F..F.',
+        '.T........T.',
+        '...F....F...',
+        'F..........F',
+        '............',
+        '.....C......'
+      ],
+      towns: [
+        { x: 1, y: 1, owner: 'enemy' },
+        { x: 10, y: 1, owner: 'enemy' },
+        { x: 3, y: 4, owner: null },
+        { x: 8, y: 4, owner: null },
+        { x: 1, y: 9, owner: 'player' },
+        { x: 10, y: 9, owner: 'player' }
+      ],
+      regularSlots: [{ x: 4, y: 12 }, { x: 5, y: 12 }, { x: 6, y: 12 }, { x: 4, y: 13 }],
+      units: [
+        { type: 'king', side: 'player', x: 5, y: 13 },
+        { type: 'mage', side: 'player', x: 6, y: 13 },   // 傭兵（ノエル隊を休ませても、ゴーレムを崩せるように）
+        { type: 'king', side: 'enemy', x: 5, y: 0 },
+        { type: 'infantry', side: 'enemy', x: 4, y: 0, role: 'guard' },
+        { type: 'infantry', side: 'enemy', x: 6, y: 0, role: 'guard' },
+        { type: 'priest', side: 'enemy', x: 5, y: 1, role: 'guard' },
+        { type: 'archer', side: 'enemy', x: 6, y: 2 },
+        { type: 'wizard', side: 'enemy', x: 3, y: 2 },
+        { type: 'wizard', side: 'enemy', x: 8, y: 2 },
+        { type: 'golem', side: 'enemy', x: 5, y: 5 },   // 真ん中の道を塞ぐ
+        { type: 'golem', side: 'enemy', x: 10, y: 5 }   // 右の道を塞ぐ
+      ]
     }
   };
 })(typeof window !== 'undefined' ? window : globalThis);

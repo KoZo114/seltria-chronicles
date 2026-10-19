@@ -198,6 +198,16 @@
     });
   }
 
+  // 呼ぶものごとの、最大人数と成功率（％）
+  function getSummonOdds(casterTypeId, typeId) {
+    var summon = SC.UNIT_TYPES[casterTypeId].summon;
+    var own = (summon.byType || {})[typeId] || {};
+    return {
+      maxSoldiers: own.maxSoldiers !== undefined ? own.maxSoldiers : summon.maxSoldiers,
+      chancePercent: own.chancePercent !== undefined ? own.chancePercent : summon.chancePercent
+    };
+  }
+
   // 召喚できるか。だめなら理由の文を、よければ null
   function checkSummon(state, unit, typeId, tile) {
     var error = checkMove(state, unit, unit || { x: -1, y: -1 });
@@ -219,14 +229,14 @@
     var unit = SC.Board.getUnitById(state, unitId);
     var error = checkSummon(state, unit, typeId, tile);
     if (error) return { ok: false, error: error };
-    var summon = SC.UNIT_TYPES[unit.type].summon;
+    var odds = getSummonOdds(unit.type, typeId);
     var type = SC.UNIT_TYPES[typeId];
     // 1人ずつ順番に試す。最大の人数に届いたら、そこでやめる（残りを試しても結果は同じ）。
     // rolls：1人ずつの成否（召喚の場面で、魔法陣を1つずつ光らせるのに使う）
     var rolls = [];
     var soldiers = 0;
-    for (var i = 0; i < type.size && soldiers < summon.maxSoldiers; i++) {
-      var success = state.rng() * 100 < summon.chancePercent;
+    for (var i = 0; i < type.size && soldiers < odds.maxSoldiers; i++) {
+      var success = state.rng() * 100 < odds.chancePercent;
       rolls.push(success);
       if (success) soldiers += 1;
     }
@@ -350,6 +360,7 @@
     getSurviveTurns: getSurviveTurns,
     getSummonTiles: getSummonTiles,
     checkSummon: checkSummon,
+    getSummonOdds: getSummonOdds,
     summonUnit: summonUnit,
     getNextReinforcement: getNextReinforcement
   };

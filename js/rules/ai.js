@@ -222,14 +222,25 @@
     return best;
   }
 
+  // 呼ぶものが選べるときは、出てくる体力の見込み（最大人数 × 1人の体力 × 成功率）が大きいほう（ウィザードならゴーレム）
+  function chooseSummonType(state, unit) {
+    var best = null;
+    SC.UNIT_TYPES[unit.type].summon.types.forEach(function (typeId) {
+      if (SC.Game.checkSummon(state, unit, typeId, null)) return;
+      var odds = SC.Game.getSummonOdds(unit.type, typeId);
+      var value = Math.min(odds.maxSoldiers, SC.UNIT_TYPES[typeId].size) * SC.UNIT_TYPES[typeId].soldierHp * odds.chancePercent;
+      if (!best || value > best.value) best = { typeId: typeId, value: value };
+    });
+    return best ? best.typeId : null;
+  }
+
   // 召喚：召喚できる部隊が、隣の空いたマスのうち、いちばん近い敵に近いマスへ呼ぶ
   function findSummon(state, units, enemies) {
     var best = null;
     units.forEach(function (unit) {
-      var summon = SC.UNIT_TYPES[unit.type].summon;
-      if (!summon) return;
-      var typeId = summon.types[0];
-      if (SC.Game.checkSummon(state, unit, typeId, null)) return;
+      if (!SC.UNIT_TYPES[unit.type].summon) return;
+      var typeId = chooseSummonType(state, unit);
+      if (!typeId) return;
       SC.Game.getSummonTiles(state, unit, typeId).forEach(function (tile) {
         var d = nearestDistance(tile, enemies);
         if (!best || d < best.d) best = { d: d, action: { unitId: unit.id, x: tile.x, y: tile.y, targetId: null, kind: 'summon', unitType: typeId } };
@@ -278,5 +289,5 @@
     return mover ? findApproachMove(state, mover, enemies) : findHealerMove(state, units[0], enemies);
   }
 
-  SC.AI = { chooseAction: chooseAction, scoreAttack: scoreAttack, findBestPrayer: findBestPrayer, findHealerMove: findHealerMove };
+  SC.AI = { chooseAction: chooseAction, scoreAttack: scoreAttack, findBestPrayer: findBestPrayer, findHealerMove: findHealerMove, chooseSummonType: chooseSummonType };
 })(typeof window !== 'undefined' ? window : globalThis);

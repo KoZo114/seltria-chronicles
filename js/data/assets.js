@@ -35,6 +35,8 @@
       priest: { player: 'assets64/units/unit_priest_player.png', enemy: 'assets64/units/unit_priest_enemy.png' },   // プリースト
       mage: { player: 'assets64/units/unit_mage_player.png', enemy: 'assets64/units/unit_mage_enemy.png' },   // 魔法使い
       skeleton: { player: 'assets64/units/unit_skeleton_player.png', enemy: 'assets64/units/unit_skeleton_enemy.png' },   // スケルトン
+      wizard: { player: 'assets64/units/unit_wizard_player.png', enemy: 'assets64/units/unit_wizard_enemy.png' },   // ウィザード（ステージ14から）
+      golem: { player: 'assets64/units/unit_golem_player.png', enemy: 'assets64/units/unit_golem_enemy.png' },   // ゴーレム（ステージ14から）
       elf: { player: 'assets64/units/unit_elf_player.png', enemy: 'assets64/units/unit_elf_enemy.png' },   // エルフ
       wyvern: { player: 'assets64/units/unit_wyvern_player.png', enemy: 'assets64/units/unit_wyvern_enemy.png' },   // ワイバーン
       general: { player: 'assets64/units/unit_general_player.png', enemy: 'assets64/units/unit_general_enemy.png' },   // ジェネラル
@@ -72,7 +74,20 @@
     // 隊長ごとの絵（同じクラスでも、隊長によって姿が違うもの）：隊長 → クラス → { map, battle }。無ければクラスの絵
     regularArt: {
       aldo: { dragonKnight: { map: 'assets64/units/unit_dragonKnight_aldo_player.png', battle: 'assets64/battle/battle_dragonKnight_aldo_player.png' } },
-      bran: { dragonKnight: { map: 'assets64/units/unit_dragonKnight_bran_player.png', battle: 'assets64/battle/battle_dragonKnight_bran_player.png' } }
+      bran: { dragonKnight: { map: 'assets64/units/unit_dragonKnight_bran_player.png', battle: 'assets64/battle/battle_dragonKnight_bran_player.png' } },
+      // セラ・ノエル・フィーナの姿（2026-10-19。雇う部隊と敵には、一般の兵の絵を使う）
+      sera: {
+        cleric: { map: 'assets64/units/unit_cleric_sera_player.png', battle: 'assets64/battle/battle_cleric_sera_player.png' },
+        priest: { map: 'assets64/units/unit_priest_sera_player.png', battle: 'assets64/battle/battle_priest_sera_player.png' }
+      },
+      noel: {
+        mage: { map: 'assets64/units/unit_mage_noel_player.png', battle: 'assets64/battle/battle_mage_noel_player.png' },
+        wizard: { map: 'assets64/units/unit_wizard_noel_player.png', battle: 'assets64/battle/battle_wizard_noel_player.png' }
+      },
+      fina: {
+        elf: { map: 'assets64/units/unit_elf_fina_player.png', battle: 'assets64/battle/battle_elf_fina_player.png' },
+        highElf: { map: 'assets64/units/unit_highElf_fina_player.png', battle: 'assets64/battle/battle_highElf_fina_player.png' }
+      }
     },
     // 正規部隊の隊長の顔の絵（128×128。tools/convert-units.py の convert_portraits）。無ければクラスの絵を出す
     portraits: {
@@ -119,12 +134,17 @@
         priest: { player: 'assets64/battle/battle_priest_player.png', enemy: 'assets64/battle/battle_priest_enemy.png' },
         mage: { player: 'assets64/battle/battle_mage_player.png', enemy: 'assets64/battle/battle_mage_enemy.png' },
         skeleton: { player: 'assets64/battle/battle_skeleton_player.png', enemy: 'assets64/battle/battle_skeleton_enemy.png' },
+        wizard: { player: 'assets64/battle/battle_wizard_player.png', enemy: 'assets64/battle/battle_wizard_enemy.png' },
+        golem: { player: 'assets64/battle/battle_golem_player.png', enemy: 'assets64/battle/battle_golem_enemy.png' },
         elf: { player: 'assets64/battle/battle_elf_player.png', enemy: 'assets64/battle/battle_elf_enemy.png' },
         wyvern: { player: 'assets64/battle/battle_wyvern_player.png', enemy: 'assets64/battle/battle_wyvern_enemy.png' },
         general: { player: 'assets64/battle/battle_general_player.png', enemy: 'assets64/battle/battle_general_enemy.png' },
         dragonKnight: { player: 'assets64/battle/battle_dragonKnight_aldo_player.png', enemy: 'assets64/battle/battle_dragonKnight_aldo_enemy.png' },
         highElf: { player: 'assets64/battle/battle_highElf_player.png', enemy: 'assets64/battle/battle_highElf_enemy.png' }
-      }
+      },
+      // 戦闘用の絵が、まだ隊長の顔のままのクラス（一般の兵の絵が届いたら、ここから外す）。
+      // 正規部隊は先頭だけ隊長の姿で、残りは一般の兵の絵になるが、ここにあるクラスは全員を隊長の姿にする（js/ui/battle-scene.js）
+      captainLook: ['elf', 'highElf', 'general', 'dragonKnight']   // 僧侶・プリースト・魔法使い・ウィザードは、一般の兵の絵が届いた（2026-10-19）
     }
   };
 })(typeof window !== 'undefined' ? window : globalThis);

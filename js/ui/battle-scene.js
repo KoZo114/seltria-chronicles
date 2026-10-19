@@ -20,6 +20,8 @@
     return path && SC.Render.isImageLoaded(path) ? path : null;
   }
 
+  function isCaptainLook(typeId) { return (getBattleAssets().captainLook || []).indexOf(typeId) >= 0; }
+
   // 兵士1人分の絵。戦闘用の絵が無いユニットは、マップ用の絵を拡大して使う
   function buildSoldierBodyHtml(fighter, slotIndex) {
     var escortType = SC.UNIT_TYPES[fighter.type].escortType;
@@ -27,7 +29,11 @@
     if (escortType && slotIndex > 0) {
       path = getBattleArt(escortType, fighter.side) || getBattleArt(ESCORT_FALLBACK_TYPE, fighter.side);
     }
-    if (!path && fighter.regularId) path = SC.Render.getRegularArtPath(fighter.regularId, fighter.type, 'battle');   // 隊長ごとの姿
+    // 正規部隊は、先頭（slotIndex 0。いちばん最後まで倒れない1人）だけ隊長の姿、残りは一般の兵の絵（2026-10-19 ユーザーの希望）。
+    // ただし、一般の兵の絵がまだ隊長の顔の絵（battle.captainLook）のクラスは、全員を隊長の姿にする（別の隊長の顔が混ざらないように）
+    if (!path && fighter.regularId && (slotIndex === 0 || isCaptainLook(fighter.type))) {
+      path = SC.Render.getRegularArtPath(fighter.regularId, fighter.type, 'battle');
+    }
     path = path || getBattleArt(fighter.type, fighter.side) || SC.Render.getUnitImagePath(fighter.type, fighter.side);
     return path
       ? '<img src="' + path + '" alt="" draggable="false">'

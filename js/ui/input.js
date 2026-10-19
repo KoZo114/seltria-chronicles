@@ -20,6 +20,8 @@
   var FACING_NAMES = { up: '上', down: '下', left: '左', right: '右' };
 
   var TIPS = {
+    wizard: 'ウィザードは、動く前なら「スケルトン」か「ゴーレム」を選んで、隣に呼べます。スケルトンは最大4人（1人ずつ70％）、ゴーレムは最大2人（1人ずつ50％）。ゴーレムは硬い壁ですが、魔法に弱く、足が遅いです。',
+    priest: 'プリーストは、6人隊に加えて、3人隊（騎士・グリフォン・ワイバーンなど）にも祈れます。3人隊に祈ると、1人戻せます（王と、召喚で出た部隊は戻せません）。',
     summon: '魔法使いは、動く前ならコマンド「召喚」で、隣にスケルトンを呼べます（1人ずつ半分の確率で、最大3人）。呼んだスケルトンは、すぐ動けます。',
     fort: '砦は、歩兵か王が行動を終えると占領できます。毎ターン20Gが入り、王が自軍の砦にいれば、そこで部隊を雇えます。中にいる部隊は、受ける打撃が2減ります。',
     cavalry: '騎士は足が速く、斜めの相手にも攻撃できます。斜めから攻められた歩兵などは反撃できません。待機するときは向きを選びます。向いている側の斜めには反撃できますが、斜め後ろは弱点です。',
@@ -230,7 +232,9 @@
     var canReachForest = selection.reach.some(function (tile) {
       return state.terrain[tile.y][tile.x] === 'forest' && !(tile.x === unit.x && tile.y === unit.y);
     });
-    if (unitType(unit).summon) showTipOnce('summon');
+    if (unitType(unit).summon && unitType(unit).summon.types.length > 1) showTipOnce('wizard');
+    else if (unitType(unit).summon) showTipOnce('summon');
+    else if (unitType(unit).prayer && unitType(unit).prayer.heavyAmount) showTipOnce('priest');
     else if (stage.newRule === 'siege' && (unitType(unit).isKing || unitType(unit).capturesTowns)) showTipOnce('fort');
     else if (unitType(unit).isKing && SC.Economy.isEnabled(state)) showTipOnce('hire');
     else if (unitType(unit).capturesTowns && SC.Economy.isEnabled(state)) showTipOnce('town');
@@ -276,7 +280,7 @@
   function isInputLocked() { return Date.now() - lastModeChange < INPUT_LOCK_MS; }
 
   // コマンド（攻撃・祈る・待機）。攻撃と祈りは相手を選ぶ段階へ進む。相手が1人だけなら、そのまま見込みを出す
-  function onCommand(command) {
+  function onCommand(command, summonChoice) {
     if (!isPlayerInputOpen() || selection.mode !== 'moved' || isInputLocked()) return;
     if (command === 'wait') {
       // 向きを持つ部隊（騎士）は、待機する前に向きを選ぶ（上下左右の矢印）
@@ -295,7 +299,7 @@
     if (command === 'summon') {
       // 召喚：隣の空いたマスを選ぶ（1つだけなら、すぐ呼ぶ）
       var summoner = selectedUnit();
-      var summonType = unitType(summoner).summon.types[0];
+      var summonType = summonChoice || unitType(summoner).summon.types[0];
       var summonTiles = SC.Game.getSummonTiles(state, summoner, summonType);
       selection.summonType = summonType;
       if (summonTiles.length === 1) { commitSummon(summonTiles[0]); return; }
@@ -1001,21 +1005,27 @@
       if (SC.Prayer.canPray(unit)) commands.push({ id: 'prayer', label: '祈る', note: '祈れる味方なし', enabled: getPrayerTargets().length > 0 });
       if (unitType(unit).canBrace) commands.push({ id: 'brace', label: '構え', note: '動くと構えられない', enabled: stayed && !unit.moved });
       if (unitType(unit).summon) {
-        var summonError = stayed ? SC.Game.checkSummon(state, unit, unitType(unit).summon.types[0], null) : '動くと召喚できない';
-        commands.push({ id: 'summon', label: '召喚', note: summonError || '', enabled: !summonError });
+        // 呼べるものが2つ以上（ウィザード）なら、「召喚：スケルトン」「召喚：ゴーレム」のように、ものごとにボタンを出す
+        var summonTypes = unitType(unit).summon.types;
+        summonTypes.forEach(function (typeId) {
+          var summonError = stayed ? SC.Game.checkSummon(state, unit, typeId, null) : '動くと召喚できない';
+          var choice = summonTypes.length > 1;
+          commands.push({ id: 'summon', summonType: typeId, choice: choice, label: choice ? '召喚<i>' + SC.UNIT_TYPES[typeId].name + '</i>' : '召喚', note: summonError || '', enabled: !summonError });
+        });
       }
       commands.push({ id: 'wait', label: '待機', note: '', enabled: true });
     menu.innerHTML = '<div class="command-title">' + title + '</div><div class="command-list">' +
       commands.map(function (command) {
-        return '<button type="button" class="command ' + command.id + '" data-command="' + command.id + '"' +
-          (command.typeId ? ' data-type="' + command.typeId + '"' : '') + (command.enabled ? '' : ' disabled') + '>' +
+        return '<button type="button" class="command ' + command.id + (command.choice ? ' choice' : '') + '" data-command="' + command.id + '"' +
+          (command.typeId ? ' data-type="' + command.typeId + '"' : '') + (command.summonType ? ' data-summon="' + command.summonType + '"' : '') +
+          (command.enabled ? '' : ' disabled') + '>' +
           '<span class="command-icon"></span><span class="command-label">' + command.label + '</span>' +
           (command.enabled || !command.note ? '' : '<small>' + command.note + '</small>') + '</button>';
       }).join('') + '</div>';
     Array.prototype.forEach.call(menu.querySelectorAll('.command'), function (button) {
       button.onclick = function () {
         if (button.dataset.type) onHireChoice(button.dataset.type);
-        else onCommand(button.dataset.command);
+        else onCommand(button.dataset.command, button.dataset.summon);
       };
     });
   }
@@ -1114,7 +1124,7 @@
     var forecast = SC.Prayer.getPrayerForecast(state, unit, position, ally);
     var note;
     if (forecast.moved) {
-      var still = SC.Prayer.getPrayerAmount(unit, unit);
+      var still = SC.Prayer.getPrayerAmount(unit, unit, ally);
       note = still > forecast.amount ? '移動してから祈ると、戻せる人数が減ります（動かなければ' + still + '人）' : '移動してから祈っています';
     } else {
       note = '動かずに祈ると、多く戻せます';
