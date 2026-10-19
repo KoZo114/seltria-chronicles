@@ -90,6 +90,14 @@
       noRestore: true,
       description: '召喚で現れる岩の巨人。とても硬いが足が遅い。魔法に弱い。補充や祈りでは戻らない。'
     },
+    // ドラゴン（ステージ16から。まずは敵の強敵）：地上の竜で最強。地形無視（湖・沼・藪もふつうに進み、沼・藪のダメージも受けない）。
+    // allDirections：隣の8マス（斜めも）に攻撃・反撃が届く。向きは無い。大型なので魔法に弱く、ドラゴンナイトはさらに+3
+    dragon: {
+      name: 'ドラゴン', size: 3, soldierHp: 18, attack: 8, defense: 2, move: 3,   // 自動対戦で調整（最初の案は体力20・攻撃9・防御3。2体だと勝率1〜2割だった）
+      rangeMin: 1, rangeMax: 1, moveType: 'ignoreTerrain', isKing: false, family: 'large',
+      allDirections: true,
+      description: '地上の竜で最強。地形を気にせず進み、斜めも含めた隣の8マスに攻撃できる。魔法とドラゴンナイトに弱い。'
+    },
     // スケルトン（ステージ12から）：召喚で現れる不死の兵。補充や祈りでは戻らず、町も占領できない。回復系に弱い
     skeleton: {
       name: 'スケルトン', size: 6, soldierHp: 4, attack: 2, defense: 0, move: 3,

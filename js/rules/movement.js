@@ -112,15 +112,16 @@
   }
 
   // 攻撃が届くか。距離（上下左右に数えたマス数）が射程の中なら届く。
-  // 斜め前も攻撃できる部隊（diagonalFront）は、すぐ斜めの相手にも届く。
+  // 斜め前も攻撃できる部隊（diagonalFront）は、すぐ斜めの相手にも届く。ドラゴン（allDirections）は、斜め4つすべてに届く。
   // facing を渡すと、その向きの斜め前だけに届く（守るときの反撃）。渡さなければ、どの斜めにも届く（攻めるときは相手のほうを向けるため）
   function isInAttackRange(unitTypeId, fromPos, targetPos, facing) {
     var unitType = SC.UNIT_TYPES[unitTypeId];
     var d = distance(fromPos, targetPos);
     if (d >= unitType.rangeMin && d <= unitType.rangeMax) return true;
-    if (!unitType.diagonalFront) return false;
+    if (!unitType.diagonalFront && !unitType.allDirections) return false;
     var dx = targetPos.x - fromPos.x, dy = targetPos.y - fromPos.y;
     if (Math.abs(dx) !== 1 || Math.abs(dy) !== 1) return false;
+    if (unitType.allDirections) return true;   // ドラゴン：斜め4つにも、向きに関係なく届く
     if (!facing) return true;
     var vector = FACING_VECTORS[facing];
     return dx * vector[0] + dy * vector[1] > 0;   // 向いている側の斜めだけ

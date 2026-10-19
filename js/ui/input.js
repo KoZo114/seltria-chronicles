@@ -1052,7 +1052,11 @@
   function describeExperience(unit) {
     var threshold = SC.Regulars.getThreshold(unit.regularId, unit.type);
     if (!state.experience) return '経験 ' + (unit.exp || 0) + '（このステージの経験値はもらい済み）';
-    return '経験 ' + (unit.exp || 0) + (threshold ? '／' + threshold + '（満タンでランクアップ）' : '');
+    if (!threshold) return '経験 ' + (unit.exp || 0);
+    // 次のクラスがまだゲームに無いとき（サーガ・ハイプリーストはステージ17から）は、経験値はためておき、登場したらランクアップする
+    var nextReady = !!SC.UNIT_TYPES[SC.Regulars.getNextRank(unit.regularId, unit.type).next];
+    if (!nextReady && (unit.exp || 0) >= threshold) return '経験 ' + unit.exp + '／' + threshold + '（満タン。次のクラスは、これから登場）';
+    return '経験 ' + (unit.exp || 0) + '／' + threshold + (nextReady ? '（満タンでランクアップ）' : '（次のクラスは、これから登場）');
   }
 
   function buildUnitInfoHtml(unit, position) {

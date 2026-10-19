@@ -39,6 +39,7 @@
       skeleton: { player: 'assets64/units/unit_skeleton_player.png', enemy: 'assets64/units/unit_skeleton_enemy.png' },   // スケルトン
       wizard: { player: 'assets64/units/unit_wizard_player.png', enemy: 'assets64/units/unit_wizard_enemy.png' },   // ウィザード（ステージ14から）
       golem: { player: 'assets64/units/unit_golem_player.png', enemy: 'assets64/units/unit_golem_enemy.png' },   // ゴーレム（ステージ14から）
+      dragon: { player: 'assets64/units/unit_dragon_player.png', enemy: 'assets64/units/unit_dragon_enemy.png' },   // ドラゴン（ステージ16から）
       elf: { player: 'assets64/units/unit_elf_player.png', enemy: 'assets64/units/unit_elf_enemy.png' },   // エルフ
       wyvern: { player: 'assets64/units/unit_wyvern_player.png', enemy: 'assets64/units/unit_wyvern_enemy.png' },   // ワイバーン
       general: { player: 'assets64/units/unit_general_player.png', enemy: 'assets64/units/unit_general_enemy.png' },   // ジェネラル
@@ -140,6 +141,7 @@
         skeleton: { player: 'assets64/battle/battle_skeleton_player.png', enemy: 'assets64/battle/battle_skeleton_enemy.png' },
         wizard: { player: 'assets64/battle/battle_wizard_player.png', enemy: 'assets64/battle/battle_wizard_enemy.png' },
         golem: { player: 'assets64/battle/battle_golem_player.png', enemy: 'assets64/battle/battle_golem_enemy.png' },
+        dragon: { player: 'assets64/battle/battle_dragon_player.png', enemy: 'assets64/battle/battle_dragon_enemy.png' },
         elf: { player: 'assets64/battle/battle_elf_player.png', enemy: 'assets64/battle/battle_elf_enemy.png' },
         wyvern: { player: 'assets64/battle/battle_wyvern_player.png', enemy: 'assets64/battle/battle_wyvern_enemy.png' },
         general: { player: 'assets64/battle/battle_general_player.png', enemy: 'assets64/battle/battle_general_enemy.png' },

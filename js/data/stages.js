@@ -756,6 +756,59 @@
         { turn: 6, from: '東', units: [{ type: 'cavalry', x: 11, y: 5 }, { type: 'archer', x: 11, y: 4 }] },
         { turn: 9, from: '北', units: [{ type: 'cavalry', x: 4, y: 1 }, { type: 'cavalry', x: 7, y: 2 }, { type: 'infantry', x: 6, y: 1 }] }
       ]
+    },
+    // ステージ16（2026-10-20 合意）：竜の棲む沼地。沼と藪がはじめて出る。敵にドラゴン（地形無視・隣の8マスに攻撃）
+    16: {
+      id: 16,
+      title: 'ステージ16　竜の棲む沼地',
+      intro: '大平原を越えた王の軍は、霧の立ちこめる沼地に足を踏み入れた。ぬかるみといばらが行く手をはばむ。沼の奥から、地を揺らす咆哮が響いた。敵の王は、古の竜を味方につけていたのだ。',
+      newRule: 'swampDragon',
+      ruleNote: '新しい決まり：沼と藪、ドラゴン\n沼と藪は進みにくく、ターンの始めにその上にいると、最大体力の1割のダメージを受けます（藪は受ける打撃が1減ります）。空を飛ぶ部隊は受けません。ドラゴンは地形を気にせず進み、斜めも含めた隣の8マスに攻撃してきます。魔法（相性+2）とドラゴンナイトに弱い強敵です。',
+      goalText: '勝利：敵の王を倒す\n敗北：自軍の王が倒される',
+      defeatHint: 'ドラゴンは魔法とドラゴンナイトに弱いです。歩兵で囲んで止め、魔法使いで攻めよう。沼と藪の上で止まると体力が減るので、道の上で待とう。空を飛ぶ部隊は、沼と藪のダメージを受けません。',
+      rules: { zoneOfControl: true, economy: true, affinity: true, experience: true, maxUnits: 10, incomeScale: { enemy: 0.5 }, hireTypes: ['infantry', 'archer', 'cleric', 'cavalry', 'harpy', 'griffin', 'wyvern', 'mage'] },
+      gold: { player: 60, enemy: 40 },
+      music: 'map',
+      battleMusic: null,
+      bossMusic: 'boss',
+      map: [
+        '..F...C...F.',
+        '.T........T.',
+        '............',
+        '..B..FF..B..',
+        'MM.MMBBMM.MM',
+        'MB.BMMMMB.BM',
+        'MM..MBBM..MM',
+        'BM...S....MB',
+        'MM..MBBM..MM',
+        'MB.BMMMMB.BM',
+        'MM.MMBBMM.MM',
+        '..B......B..',
+        '.T........T.',
+        '.....C......'
+      ],
+      towns: [
+        { x: 1, y: 1, owner: 'enemy' },
+        { x: 10, y: 1, owner: 'enemy' },
+        { x: 5, y: 7, owner: null },    // 砦
+        { x: 1, y: 12, owner: 'player' },
+        { x: 10, y: 12, owner: 'player' }
+      ],
+      regularSlots: [{ x: 4, y: 12 }, { x: 5, y: 12 }, { x: 6, y: 12 }, { x: 4, y: 13 }],
+      units: [
+        { type: 'king', side: 'player', x: 5, y: 13 },
+        { type: 'mage', side: 'player', x: 6, y: 13 },   // 傭兵（ドラゴンに強い魔法）
+        { type: 'king', side: 'enemy', x: 6, y: 0 },
+        { type: 'infantry', side: 'enemy', x: 5, y: 0, role: 'guard' },
+        { type: 'infantry', side: 'enemy', x: 7, y: 0, role: 'guard' },
+        { type: 'priest', side: 'enemy', x: 6, y: 1 },
+        { type: 'archer', side: 'enemy', x: 4, y: 1 },
+        { type: 'archer', side: 'enemy', x: 8, y: 1 },
+        { type: 'dragon', side: 'enemy', x: 6, y: 2 }
+      ],
+      reinforcements: [
+        { turn: 10, from: '沼の奥', units: [{ type: 'dragon', x: 6, y: 3 }] }   // 2体目（自動対戦で調整。6ターン目だと勝ちにくすぎた）
+      ]
     }
   };
 })(typeof window !== 'undefined' ? window : globalThis);
