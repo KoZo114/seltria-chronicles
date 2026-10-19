@@ -90,6 +90,9 @@
       fina: {
         elf: { map: 'assets64/units/unit_elf_fina_player.png', battle: 'assets64/battle/battle_elf_fina_player.png' },
         highElf: { map: 'assets64/units/unit_highElf_fina_player.png', battle: 'assets64/battle/battle_highElf_fina_player.png' }
+      },
+      gail: {
+        general: { map: 'assets64/units/unit_general_gail_player.png', battle: 'assets64/battle/battle_general_gail_player.png' }
       }
     },
     // 正規部隊の隊長の顔の絵（128×128。tools/convert-units.py の convert_portraits）。無ければクラスの絵を出す
