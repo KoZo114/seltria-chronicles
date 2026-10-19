@@ -51,10 +51,17 @@
   //  castlePercent：城にいる王の、合計ダメージを減らす割合（無ければ0）
   function getHitBreakdown(state, attacker, defender, defenderPos) {
     var terrain = SC.Board.getTerrain(state, defenderPos.x, defenderPos.y);
-    var terrainDefense = getsTerrainDefense(defender) ? terrain.defense : 0;
+    var defenderType = SC.UNIT_TYPES[defender.type];
+    var terrainId = state.terrain[defenderPos.y][defenderPos.x];
+    var terrainDefense = getsTerrainDefense(defender) ? terrain.defense + ((defenderType.terrainDefenseBonus || {})[terrainId] || 0) : 0;
     var affinity = hasAffinity(state, attacker.type, defender.type) ? SC.COMBAT.affinityBonus : 0;
+    // その部隊だけの得意（エルフは飛行にさらに+1）。相性のあるステージだけ、相性の分にまとめて出す
+    var extra = usesAffinity(state) ? ((SC.UNIT_TYPES[attacker.type].bonusAgainst || {})[defenderType.family] || 0) : 0;
+    affinity += extra;
     var attack = SC.UNIT_TYPES[attacker.type].attack + affinity;
     var defense = SC.UNIT_TYPES[defender.type].defense + terrainDefense;
+    // 空からの攻撃に弱い部隊（ジェネラル）は、飛行の系統から攻められると防御が下がる
+    if (defenderType.defenseVsFlying && SC.UNIT_TYPES[attacker.type].family === 'flying') defense = Math.max(0, defense - defenderType.defenseVsFlying);
     return {
       attack: attack,
       affinity: affinity,

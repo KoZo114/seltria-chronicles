@@ -249,7 +249,7 @@
       // 召喚1回の成功で SC.EXPERIENCE.perSummon 点（人数ぶんにすると、毎ターン呼ぶだけで1ステージ25点ほどたまり、育ちすぎた）
       unit.exp = (unit.exp || 0) + SC.EXPERIENCE.perSummon;
       events.push({ type: 'exp', unitId: unit.id, amount: SC.EXPERIENCE.perSummon, exp: unit.exp });
-      if (SC.Regulars.canRankUp(unit.type, unit.exp)) events.push(SC.Regulars.rankUpUnit(unit));
+      if (SC.Regulars.canRankUp(unit.regularId, unit.type, unit.exp)) events.push(SC.Regulars.rankUpUnit(unit));
     }
     return { ok: true, events: events };
   }

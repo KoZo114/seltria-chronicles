@@ -34,12 +34,23 @@
       knight: { player: 'assets64/units/unit_knight_player.png', enemy: 'assets64/units/unit_knight_enemy.png' },   // ナイト（最初に作った騎士の絵）
       priest: { player: 'assets64/units/unit_priest_player.png', enemy: 'assets64/units/unit_priest_enemy.png' },   // プリースト
       mage: { player: 'assets64/units/unit_mage_player.png', enemy: 'assets64/units/unit_mage_enemy.png' },   // 魔法使い
-      skeleton: { player: 'assets64/units/unit_skeleton_player.png', enemy: 'assets64/units/unit_skeleton_enemy.png' }   // スケルトン
+      skeleton: { player: 'assets64/units/unit_skeleton_player.png', enemy: 'assets64/units/unit_skeleton_enemy.png' },   // スケルトン
+      elf: { player: 'assets64/units/unit_elf_player.png', enemy: 'assets64/units/unit_elf_enemy.png' },   // エルフ
+      wyvern: { player: 'assets64/units/unit_wyvern_player.png', enemy: 'assets64/units/unit_wyvern_enemy.png' },   // ワイバーン
+      general: { player: 'assets64/units/unit_general_player.png', enemy: 'assets64/units/unit_general_enemy.png' },   // ジェネラル
+      dragonKnight: { player: 'assets64/units/unit_dragonKnight_aldo_player.png', enemy: 'assets64/units/unit_dragonKnight_aldo_enemy.png' },   // ドラゴンナイト（隊長の絵が無いとき）
+      highElf: { player: 'assets64/units/unit_highElf_player.png', enemy: 'assets64/units/unit_highElf_enemy.png' }   // ハイエルフ
     },
     // タイトル画面の背景。video が再生できないとき（省電力モードなど）は poster の1枚絵を出す
     title: {
       video: 'assets64/title/title_loop.mp4',
       poster: 'assets64/title/title_poster.jpg'
+    },
+    // ランクアップの場面の背景（金色の光の柱の動画）。どの部隊のランクアップでも同じものを使う。
+    // 無い・再生できないときは、プログラムで描いた光の柱だけになる（js/ui/rankup-scene.js）
+    rankup: {
+      video: 'assets64/rankup/rankup_loop.mp4',
+      poster: 'assets64/rankup/rankup_poster.jpg'
     },
     // 音。書かれていない・読み込めない音は鳴らないだけで、ゲームは進む
     // 曲の名前（title など）は、main.js（タイトル）と stages.js（ステージごとの曲）から指定する。効果音はファイルを使わない（js/ui/sound.js で作る）
@@ -57,6 +68,11 @@
       aide: 'assets64/hire/hire_aide.png',
       aide2: 'assets64/hire/hire_aide2.png',
       background: 'assets64/hire/hire_bg.png'
+    },
+    // 隊長ごとの絵（同じクラスでも、隊長によって姿が違うもの）：隊長 → クラス → { map, battle }。無ければクラスの絵
+    regularArt: {
+      aldo: { dragonKnight: { map: 'assets64/units/unit_dragonKnight_aldo_player.png', battle: 'assets64/battle/battle_dragonKnight_aldo_player.png' } },
+      bran: { dragonKnight: { map: 'assets64/units/unit_dragonKnight_bran_player.png', battle: 'assets64/battle/battle_dragonKnight_bran_player.png' } }
     },
     // 正規部隊の隊長の顔の絵（128×128。tools/convert-units.py の convert_portraits）。無ければクラスの絵を出す
     portraits: {
@@ -102,7 +118,12 @@
         knight: { player: 'assets64/battle/battle_knight_player.png', enemy: 'assets64/battle/battle_knight_enemy.png' },
         priest: { player: 'assets64/battle/battle_priest_player.png', enemy: 'assets64/battle/battle_priest_enemy.png' },
         mage: { player: 'assets64/battle/battle_mage_player.png', enemy: 'assets64/battle/battle_mage_enemy.png' },
-        skeleton: { player: 'assets64/battle/battle_skeleton_player.png', enemy: 'assets64/battle/battle_skeleton_enemy.png' }
+        skeleton: { player: 'assets64/battle/battle_skeleton_player.png', enemy: 'assets64/battle/battle_skeleton_enemy.png' },
+        elf: { player: 'assets64/battle/battle_elf_player.png', enemy: 'assets64/battle/battle_elf_enemy.png' },
+        wyvern: { player: 'assets64/battle/battle_wyvern_player.png', enemy: 'assets64/battle/battle_wyvern_enemy.png' },
+        general: { player: 'assets64/battle/battle_general_player.png', enemy: 'assets64/battle/battle_general_enemy.png' },
+        dragonKnight: { player: 'assets64/battle/battle_dragonKnight_aldo_player.png', enemy: 'assets64/battle/battle_dragonKnight_aldo_enemy.png' },
+        highElf: { player: 'assets64/battle/battle_highElf_player.png', enemy: 'assets64/battle/battle_highElf_enemy.png' }
       }
     }
   };

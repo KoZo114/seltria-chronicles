@@ -37,6 +37,10 @@
     });
     var hire = assets.hire || {};   // 雇う画面（側近と広間）
     Object.keys(hire).forEach(function (id) { paths.push(hire[id]); });
+    var regularArt = assets.regularArt || {};   // 隊長ごとの絵
+    Object.keys(regularArt).forEach(function (id) {
+      Object.keys(regularArt[id]).forEach(function (typeId) { paths.push(regularArt[id][typeId].map, regularArt[id][typeId].battle); });
+    });
     var portraits = assets.portraits || {};   // 隊長の顔の絵
     Object.keys(portraits).forEach(function (id) { paths.push(portraits[id]); });
     var capture = assets.capture || {};   // 町を占領した場面
@@ -62,6 +66,12 @@
   function getTerrainImagePath(terrainId, x, y) {
     var candidates = (getAssets().terrain[terrainId] || []).filter(function (path) { return loadedImages[path]; });
     return candidates.length > 0 ? candidates[(x * 7 + y * 13) % candidates.length] : null;
+  }
+
+  // 隊長ごとの絵（そのクラスで、その隊長だけの姿があれば）。kind は 'map' か 'battle'。無ければ null
+  function getRegularArtPath(regularId, typeId, kind) {
+    var art = (((getAssets().regularArt || {})[regularId] || {})[typeId] || {})[kind];
+    return art && loadedImages[art] ? art : null;
   }
 
   // 隊長の顔の絵（読み込めていなければ null）
@@ -306,7 +316,7 @@
     var element = document.createElement('div');
     element.className = 'unit ' + unit.side + (unit.regularId ? ' regular' : '');
     element.dataset.type = unit.type;
-    var imagePath = getUnitImagePath(unit.type, unit.side);
+    var imagePath = (unit.regularId && getRegularArtPath(unit.regularId, unit.type, 'map')) || getUnitImagePath(unit.type, unit.side);
     var body = imagePath
       ? '<div class="unit-plate"></div><img class="sprite" src="' + imagePath + '" alt="" draggable="false">'
       : createUnitSvg(unit.type, unit.side);
@@ -362,7 +372,7 @@
       element.classList.toggle('acted', unit.acted);
       element.classList.toggle('braced', !!unit.braced);
       if (unit.regularId) {
-        var threshold = SC.Regulars.getThreshold(unit.type);
+        var threshold = SC.Regulars.getThreshold(unit.regularId, unit.type);
         var bar = element.querySelector('.exp-bar i');
         if (bar) bar.style.width = (threshold ? Math.min(100, Math.round((unit.exp || 0) / threshold * 100)) : 100) + '%';
       }
@@ -640,6 +650,7 @@
     preloadImages: preloadImages,
     getUnitImagePath: getUnitImagePath,
     getPortraitPath: getPortraitPath,
+    getRegularArtPath: getRegularArtPath,
     isImageLoaded: isImageLoaded,
     createUnitSvg: createUnitSvg,
     sleep: sleep

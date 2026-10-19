@@ -4,7 +4,7 @@
   var SAVE_KEY = 'seltria-chronicles-save-v1';
 
   function createEmptySave() {
-    return { version: 1, stages: {}, seenTips: {}, settings: { battleScene: true, sound: true }, battle: null, roster: [] };
+    return { version: 1, stages: {}, seenTips: {}, settings: { battleScene: true, sound: true }, battle: null, roster: [], rosterVersion: (SC.ROSTER_VERSION || 1) };
   }
 
   function isPlainObject(value) {
@@ -27,6 +27,7 @@
           if (!isPlainObject(record) || record.cleared !== true) return;
           var bestTurns = Number.isInteger(record.bestTurns) && record.bestTurns > 0 ? record.bestTurns : null;
           save.stages[stageId] = { cleared: true, bestTurns: bestTurns };
+          if (record.expEarned === true) save.stages[stageId].expEarned = true;   // そのステージで、正規部隊がもう経験値をもらった
         });
       }
       if (isPlainObject(parsed.seenTips)) {
@@ -41,7 +42,13 @@
       }
       if (isValidBattle(parsed.battle)) save.battle = parsed.battle;
       // 正規部隊の記録（ステージ11から）：形がおかしいものは捨てる
-      if (Array.isArray(parsed.roster)) {
+      // 育ち方を変えたあとの古い記録（版が違う）は、正規部隊だけ作り直す。遊びかけの戦いも、正規部隊がいれば消す
+      var rosterIsCurrent = parsed.rosterVersion === (SC.ROSTER_VERSION || 1);
+      if (!rosterIsCurrent && Array.isArray(parsed.roster) && parsed.roster.length > 0) {
+        save.rosterWasReset = true;
+        if (save.battle && save.battle.state && (save.battle.state.deployed || []).length > 0) save.battle = null;
+      }
+      if (rosterIsCurrent && Array.isArray(parsed.roster)) {
         save.roster = parsed.roster.filter(function (member) {
           return isPlainObject(member) && typeof member.id === 'string' && typeof member.name === 'string' &&
             typeof member.type === 'string' && Number.isFinite(member.exp) && member.exp >= 0;
@@ -68,7 +75,19 @@
     var previous = save.stages[stageId];
     var bestTurns = previous && previous.bestTurns ? Math.min(previous.bestTurns, turns) : turns;
     save.stages[stageId] = { cleared: true, bestTurns: bestTurns };
+    if (previous && previous.expEarned) save.stages[stageId].expEarned = true;
     return save;
+  }
+
+  // 正規部隊が経験値をもらえるステージか。もらえるのは、そのステージで1回だけ（勝って記録に書き戻したら、もらったことにする）。
+  // 2026-10-19：育ち方を見直したので、「クリアしたか」ではなく「もう経験値をもらったか」で決めるように変えた（前にクリアしたステージでも、もう一度もらえる）
+  function canEarnExperience(save, stageId) {
+    var record = save.stages[stageId];
+    return !(record && record.expEarned);
+  }
+
+  function markExperienceEarned(save, stageId) {
+    if (save.stages[stageId]) save.stages[stageId].expEarned = true;
   }
 
   // 遊べるステージか。ステージ1はいつでも、それ以降は一つ前のステージをクリアすると遊べる
@@ -107,6 +126,7 @@
 
   SC.Save = {
     SAVE_KEY: SAVE_KEY, createEmptySave: createEmptySave, load: load, store: store, recordClear: recordClear, isStageUnlocked: isStageUnlocked,
+    canEarnExperience: canEarnExperience, markExperienceEarned: markExperienceEarned,
     saveBattle: saveBattle, clearBattle: clearBattle, restoreBattle: restoreBattle
   };
 })(typeof window !== 'undefined' ? window : globalThis);

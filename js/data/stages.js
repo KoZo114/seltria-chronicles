@@ -590,6 +590,57 @@
         { type: 'skeleton', side: 'enemy', x: 6, y: 4 },
         { type: 'skeleton', side: 'enemy', x: 9, y: 4 }
       ]
+    },
+    13: {
+      id: 13,
+      title: 'ステージ13　竜の峰',
+      intro: '静寂の谷を抜けた王の軍の前に、険しい「竜の峰」がそびえていた。空を舞うワイバーンの群れが、敵の旗のもとで翼を広げている。地上から空を射抜けるのは、弓の名手だけだ。峰のふもとで、歴戦の騎士ガイルが王に剣を捧げた。',
+      newRule: 'skyArmy',
+      ruleNote: '新しい決まり：空の軍団と、出撃する部隊を選ぶ\n敵は空を飛ぶワイバーン・グリフォン・ハーピーが中心です。空の部隊は谷も越えてきますが、弓に弱い（相性+2）。弓兵のフィーナ隊は、経験値が満タンになるとエルフにランクアップし、飛行にさらに強くなります。正規部隊にガイル隊（騎士）が加わりました。出撃できるのは4部隊までです。',
+      goalText: '勝利：敵の王を倒す\n敗北：自軍の王が倒される',
+      defeatHint: '弓兵と魔法使いを前に出しすぎず、空の敵が近づいたところを撃とう。ワイバーンは足が速いので、弓兵の前に歩兵やナイトを置いて守ろう。弓の傭兵を雇うのも手です。',
+      rules: { zoneOfControl: true, economy: true, affinity: true, experience: true, maxUnits: 10, hireTypes: ['infantry', 'archer', 'cleric', 'cavalry', 'harpy', 'griffin', 'mage'] },
+      gold: { player: 60, enemy: 20 },   // 初期G（2026-10-19 ユーザー決定：60G。召喚でスケルトンを呼べば補える）
+      music: 'map',
+      battleMusic: null,
+      bossMusic: 'boss',
+      map: [
+        '..F...C..F..',
+        '.T.F.....F.T',
+        'WW..F..F..WW',
+        '.W.......W..',
+        '...FF..FF...',
+        'F..W....W..F',
+        '.T.WW..WW.T.',
+        '...F....F...',
+        'WW...FF...WW',
+        '.F..W..W..F.',
+        '.T........T.',
+        '..FF....FF..',
+        '............',
+        '.....C......'
+      ],
+      towns: [
+        { x: 1, y: 1, owner: 'enemy' },
+        { x: 11, y: 1, owner: 'enemy' },
+        { x: 1, y: 6, owner: null },
+        { x: 10, y: 6, owner: null },
+        { x: 1, y: 10, owner: 'player' },
+        { x: 10, y: 10, owner: 'player' }
+      ],
+      regularSlots: [{ x: 4, y: 12 }, { x: 5, y: 12 }, { x: 6, y: 12 }, { x: 4, y: 13 }],
+      units: [
+        { type: 'king', side: 'player', x: 5, y: 13 },
+        { type: 'archer', side: 'player', x: 6, y: 13 },   // 傭兵
+        { type: 'king', side: 'enemy', x: 6, y: 0 },
+        { type: 'infantry', side: 'enemy', x: 5, y: 0, role: 'guard' },
+        { type: 'infantry', side: 'enemy', x: 7, y: 0, role: 'guard' },
+        { type: 'archer', side: 'enemy', x: 6, y: 1 },
+        { type: 'wyvern', side: 'enemy', x: 3, y: 2 },
+        { type: 'wyvern', side: 'enemy', x: 8, y: 2 },
+        { type: 'harpy', side: 'enemy', x: 2, y: 3 },
+        { type: 'harpy', side: 'enemy', x: 10, y: 3 }
+      ]
     }
   };
 })(typeof window !== 'undefined' ? window : globalThis);

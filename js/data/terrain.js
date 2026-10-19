@@ -61,7 +61,8 @@
   SC.MOVE_TYPES = {
     ground: { name: '歩き' },
     woodland: { name: '歩き（森が得意）', costOverrides: { forest: 1 } },
-    mounted: { name: '馬（森が苦手）', costOverrides: { forest: 3 } },   // 騎士   // 弓兵がランクアップしたエルフ用（まだ使っていない）
+    mounted: { name: '馬（森が苦手）', costOverrides: { forest: 3 } },   // 騎士
+    elven: { name: '森の民（森が得意・湖も渡れる）', costOverrides: { forest: 1, lake: 2 }, canEnterImpassable: true },   // ハイエルフ   // 弓兵がランクアップしたエルフ用（まだ使っていない）
     flying: { name: '飛行', flatCost: 1, canEnterImpassable: true, ignoresTerrainDefense: true },
     ignoreTerrain: { name: '地形無視', flatCost: 1, canEnterImpassable: true, ignoresTerrainDefense: true }   // ドラゴン用
   };

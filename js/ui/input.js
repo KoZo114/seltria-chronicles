@@ -353,7 +353,7 @@
     // それぞれが立っている地形も控える（戦闘シーンの背景を、左右で別々の地形にするため）
     function snapshot(unit, position) {
       return {
-        id: unit.id, type: unit.type, side: unit.side, hp: unit.hp, maxHp: SC.Combat.getMaxHp(unit.type),
+        id: unit.id, type: unit.type, side: unit.side, hp: unit.hp, maxHp: SC.Combat.getMaxHp(unit.type), regularId: unit.regularId || null,
         terrainId: state.terrain[position.y][position.x], terrainOwner: getCastleOwner(position.x, position.y)
       };
     }
@@ -464,28 +464,7 @@
     runAnimation(result.events, battle);
   }
 
-  // ランクアップの札：隊長の顔と、新しいクラス、ひと言。約2秒、タップで進む
-  function showRankUpCard(event) {
-    var regular = SC.REGULARS.filter(function (r) { return r.id === event.regularId; })[0] || {};
-    var portrait = SC.Render.getPortraitPath(event.regularId) || SC.Render.getUnitImagePath(event.to, 'player');
-    var card = document.createElement('div');
-    card.id = 'rankup-card';
-    card.innerHTML = '<div class="rankup-box">' +
-      '<div class="rankup-title">ランクアップ！</div>' +
-      (portrait ? '<img class="rankup-portrait" src="' + portrait + '" alt="">' : '') +
-      '<div class="rankup-text"><b>' + event.name + '隊</b>は<br>' + SC.UNIT_TYPES[event.from].name + ' → <em>' + SC.UNIT_TYPES[event.to].name + '</em> になった</div>' +
-      (regular.rankUpLine ? '<div class="rankup-line">「' + regular.rankUpLine + '」</div>' : '') +
-      '</div>';
-    byId('app').appendChild(card);
-    return new Promise(function (resolve) {
-      var done = false;
-      function finish() { if (done) return; done = true; card.remove(); resolve(); }
-      card.onclick = finish;
-      root.setTimeout(finish, 2200);
-    });
-  }
-
-  // 正規部隊の経験値（「＋3」）とランクアップ（帯と、光って姿が変わる）を見せる
+  // 正規部隊の経験値（「＋3」）とランクアップ（マップで光って姿が変わり、ランクアップの場面を出す）を見せる
   function showGrowth(growth) {
     if (growth.length === 0) return Promise.resolve();
     growth.filter(function (event) { return event.type === 'exp'; }).forEach(function (event) {
@@ -499,8 +478,7 @@
         unitTypeById[event.unitId] = event.to;
         refresh();   // 新しいクラスの絵にする
         SC.Render.animateRankUp(event.unitId);
-        SC.Sound.play('victory', 0.35);
-        return showRankUpCard(event);
+        return SC.RankUpScene.play(event);
       });
     }, wait);
   }
@@ -744,6 +722,7 @@
       });
     }
     if (won) SC.Save.recordClear(options.save, stage.id, turns);
+    if (won && state.experience && (state.deployed || []).length > 0) SC.Save.markExperienceEarned(options.save, stage.id);   // このステージの経験値は、もうもらった
     SC.Save.store(options.save);
     SC.Render.sleep(450).then(function () {
       if (mySession !== session) return;
@@ -791,7 +770,7 @@
       var fallen = (state.fallenRegulars || {})[regularId];
       var type = unit ? unit.type : fallen ? fallen.type : before.type;
       var exp = unit ? (unit.exp || 0) : fallen ? Math.floor((fallen.exp || 0) / 2) : before.exp;
-      var threshold = SC.Regulars.getThreshold(type);
+      var threshold = SC.Regulars.getThreshold(regularId, type);
       var note = !unit ? '<em class="bad">撤退（経験値が半分）</em>' : type !== before.type ? '<em>' + SC.UNIT_TYPES[type].name + 'にランクアップ！</em>' : '';
       return '<div><b>' + before.name + '隊</b><span>' + SC.UNIT_TYPES[type].name + '　経験 ' + exp + (threshold ? '／' + threshold : '') + '</span>' + note + '</div>';
     }).join('');
@@ -1061,8 +1040,8 @@
 
   // 正規部隊の経験値（情報欄の最後の行に出す）
   function describeExperience(unit) {
-    var threshold = SC.Regulars.getThreshold(unit.type);
-    if (!state.experience) return '経験 ' + (unit.exp || 0) + '（遊び直しなので増えない）';
+    var threshold = SC.Regulars.getThreshold(unit.regularId, unit.type);
+    if (!state.experience) return '経験 ' + (unit.exp || 0) + '（このステージの経験値はもらい済み）';
     return '経験 ' + (unit.exp || 0) + (threshold ? '／' + threshold + '（満タンでランクアップ）' : '');
   }
 
@@ -1075,7 +1054,7 @@
     if (unit.side === 'enemy' && selection.mode === 'idle') {
       lastLine = '橙：移動範囲　赤い斜線：攻撃範囲' + (state.rules.zoneHints ? '　点線：なわばり' : '');
     }
-    var imagePath = (unit.regularId && SC.Render.getPortraitPath(unit.regularId)) || SC.Render.getUnitImagePath(unit.type, unit.side);   // 正規部隊は隊長の顔
+    var imagePath = (unit.regularId && (SC.Render.getPortraitPath(unit.regularId) || SC.Render.getRegularArtPath(unit.regularId, unit.type, 'map'))) || SC.Render.getUnitImagePath(unit.type, unit.side);   // 正規部隊は隊長の顔
     var portrait = imagePath ? '<img class="portrait ' + unit.side + '" src="' + imagePath + '" alt="">' : '';
     var affinityLine = state.rules.affinity ? describeAffinity(type) : '';
     return '<div class="info-row">' + portrait + '<div class="info-text">' +

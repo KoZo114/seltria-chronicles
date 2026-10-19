@@ -9,7 +9,7 @@
     SC.REGULARS.forEach(function (regular) {
       if (regular.joinStage > stageId) return;
       if (roster.some(function (member) { return member.id === regular.id; })) return;
-      roster.push({ id: regular.id, name: regular.name, type: regular.type, exp: 0 });
+      roster.push({ id: regular.id, name: regular.name, type: regular.path[0], exp: 0 });
     });
     return roster;
   }
@@ -21,15 +21,24 @@
     return (roster || []).filter(function (member) { return joined[member.id] && SC.UNIT_TYPES[member.type]; });
   }
 
-  // 満タンまでの経験値（このクラスにランクアップの先が無ければ null）
-  function getThreshold(typeId) {
-    var rank = SC.RANKS[typeId];
+  // 隊長の育つ道で、今のクラスの次の段（無ければ null）：{ next, exp }
+  function getNextRank(regularId, typeId) {
+    var regular = SC.REGULARS.filter(function (r) { return r.id === regularId; })[0];
+    if (!regular) return null;
+    var index = regular.path.indexOf(typeId);
+    if (index < 0 || index >= regular.path.length - 1) return null;
+    return { next: regular.path[index + 1], exp: regular.pathExp[index] };
+  }
+
+  // 満タンまでの経験値（もう上がらなければ null）
+  function getThreshold(regularId, typeId) {
+    var rank = getNextRank(regularId, typeId);
     return rank ? rank.exp : null;
   }
 
   // 今ランクアップできるか（満タンで、次のクラスがゲームにある）
-  function canRankUp(typeId, exp) {
-    var rank = SC.RANKS[typeId];
+  function canRankUp(regularId, typeId, exp) {
+    var rank = getNextRank(regularId, typeId);
     return !!rank && exp >= rank.exp && !!SC.UNIT_TYPES[rank.next];
   }
 
@@ -41,7 +50,7 @@
 
   // ランクアップ：クラスを1つ上げる。人数はそのまま（けがは治る）。満タンの分の経験値を使う
   function rankUp(unit) {
-    var rank = SC.RANKS[unit.type];
+    var rank = getNextRank(unit.regularId, unit.type);
     var soldiers = SC.Combat.getSoldierCount(unit);
     var from = unit.type;
     unit.type = rank.next;
@@ -66,7 +75,7 @@
     });
     // ランクアップは、戦いが終わって生き残っていればする
     state.units.forEach(function (unit) {
-      if (unit.regularId && unit.hp > 0 && canRankUp(unit.type, unit.exp || 0)) events.push(rankUp(unit));
+      if (unit.regularId && unit.hp > 0 && canRankUp(unit.regularId, unit.type, unit.exp || 0)) events.push(rankUp(unit));
     });
     return events;
   }
@@ -77,7 +86,7 @@
     var gained = restored * SC.EXPERIENCE.perPrayedSoldier;
     unit.exp = (unit.exp || 0) + gained;
     var events = [{ type: 'exp', unitId: unit.id, amount: gained, exp: unit.exp }];
-    if (canRankUp(unit.type, unit.exp)) events.push(rankUp(unit));
+    if (canRankUp(unit.regularId, unit.type, unit.exp)) events.push(rankUp(unit));
     return events;
   }
 
@@ -113,6 +122,7 @@
   SC.Regulars = {
     ensureRoster: ensureRoster,
     getAvailable: getAvailable,
+    getNextRank: getNextRank,
     getThreshold: getThreshold,
     canRankUp: canRankUp,
     getExperience: getExperience,

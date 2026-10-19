@@ -80,6 +80,47 @@
       noRestore: true,
       description: '召喚で現れる不死の兵。補充や祈りでは戻らない。僧侶に弱い。'
     },
+    // エルフ（ステージ13から。弓兵のランクアップ。正規部隊だけがなれる）：森を自在に動き、森では守りが固い。飛行にとても強い
+    // bonusAgainst：その系統を攻めるとき、相性に加えて打撃に足す値。terrainDefenseBonus：その地形にいるとき、地形の守りに足す値
+    elf: {
+      name: 'エルフ', size: 6, soldierHp: 5, attack: 3, defense: 0, move: 4,
+      rangeMin: 2, rangeMax: 2, moveType: 'woodland', isKing: false, family: 'bow',
+      bonusAgainst: { flying: 1 },
+      terrainDefenseBonus: { forest: 1 },
+      description: '弓兵のランクアップ。森を自在に動き、森では守りが固い。飛行にとても強い。'
+    },
+    // ---- 正規部隊だけがなれる、3段目のクラス（2026-10-19 ユーザー決定） ----
+    // ジェネラル（ナイトの上）：最強の壁。地上からの攻撃はほとんど効かないが、空からの攻撃には守りが2下がる。移動4
+    // defenseVsFlying：飛行の系統から攻められたときに、防御から引く値
+    general: {
+      name: 'ジェネラル', size: 6, soldierHp: 8, attack: 4, defense: 4, move: 4,
+      rangeMin: 1, rangeMax: 1, moveType: 'ground', isKing: false, family: 'spear',
+      canBrace: true, capturesTowns: true,
+      defenseVsFlying: 2,
+      description: 'ナイトのランクアップ。地上からの攻撃はほとんど効かない最強の壁。空からの攻撃には少し弱い。'
+    },
+    // ドラゴンナイト（騎士の上。40点で上がる）：竜に乗る。地形無視で、湖も越える。弓には弱いが、ほかにはほぼ勝てる。ドラゴンに特に強い
+    dragonKnight: {
+      name: 'ドラゴンナイト', size: 3, soldierHp: 14, attack: 8, defense: 2, move: 5,
+      rangeMin: 1, rangeMax: 1, moveType: 'ignoreTerrain', isKing: false, family: 'flying',
+      bonusAgainst: { large: 3 },
+      description: '騎士のランクアップ。竜に乗り、地形を気にせず進む。弓には弱いが、ほかにはほぼ勝てる。ドラゴンに特に強い。'
+    },
+    // ハイエルフ（エルフの上）：森と湖も進み、隣にも2マス先にも撃てる。飛行にさらに強い
+    highElf: {
+      name: 'ハイエルフ', size: 6, soldierHp: 6, attack: 4, defense: 1, move: 5,
+      rangeMin: 1, rangeMax: 2, moveType: 'elven', isKing: false, family: 'bow',
+      bonusAgainst: { flying: 2 },
+      terrainDefenseBonus: { forest: 1 },
+      description: 'エルフのランクアップ。森も湖も進み、隣にも2マス先にも撃てる。飛行にとても強い。'
+    },
+    // ワイバーン（ステージ13から）：いちばん速く飛ぶ竜。グリフォンより少し強い
+    wyvern: {
+      name: 'ワイバーン', size: 3, soldierHp: 13, attack: 7, defense: 1, move: 6,
+      rangeMin: 1, rangeMax: 1, moveType: 'flying', isKing: false, family: 'flying',
+      cost: 120,
+      description: 'いちばん速く飛ぶ竜。グリフォンより強い。弓に弱い。'
+    },
     // グリフォン（ステージ10から）：空を飛ぶ重装隊。ハーピーより遅いが強い（docs/キャラクター計画.md）
     griffin: {
       name: 'グリフォン', size: 3, soldierHp: 12, attack: 6, defense: 1, move: 4,

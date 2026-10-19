@@ -105,6 +105,16 @@
     renderSoundButton();   // ゲーム中のメニューで音を切り替えたかもしれないので、表示を合わせ直す
     playTitleVideo();
     if (!isTitleWaiting()) SC.Sound.playMusic('title', true);
+    // 正規部隊の育ち方を新しくしたので、前の記録で育てていた人に知らせる（1回だけ）
+    if (save.rosterWasReset) {
+      delete save.rosterWasReset;
+      SC.Save.store(save);
+      SC.Screens.showModal({
+        title: '正規部隊の育ち方が新しくなりました',
+        text: '正規部隊は3段階で育つようになりました。\nアルドは歩兵 → 騎士 → ドラゴンナイト、ガイルはナイトで加わりジェネラルへ、など。\nそのため、正規部隊の記録だけを最初からにしました（クリアしたステージの記録はそのままです）。',
+        buttons: [{ label: 'わかった', style: 'primary' }]
+      });
+    }
   }
 
   function getStageIds() {
@@ -260,7 +270,7 @@
         save: save, onExit: showTitle, onBack: function () { showTitle(); showStageSelect(); },
         onNext: startStage,   // 勝ったあとの「次のステージへ」（出陣の準備をはさむため）
         regulars: regulars ? regulars.map(function (member) { return { id: member.id, name: member.name, type: member.type, exp: member.exp }; }) : null,
-        noExperience: !!(save.stages[stageId] && save.stages[stageId].cleared)
+        noExperience: !SC.Save.canEarnExperience(save, stageId)
       });
     });
   }
@@ -274,16 +284,16 @@
     var available = SC.Regulars.getAvailable(save.roster, stageId);
     var limit = Math.min(SC.MAX_DEPLOY, stage.regularSlots.length);
     var chosen = available.slice(0, limit).map(function (member) { return member.id; });
-    var replay = !!(save.stages[stageId] && save.stages[stageId].cleared);
+    var replay = !SC.Save.canEarnExperience(save, stageId);
     byId('prep-lead').innerHTML = stage.title + '<br><small>出撃する正規部隊を選ぶ（' + limit + '部隊まで）' +
-      (replay ? '　<em>クリアしたステージなので、経験値は入りません</em>' : '') + '</small>';
+      (replay ? '　<em>このステージの経験値は、もうもらいました（遊び直しでは入りません）</em>' : '') + '</small>';
 
     function render() {
       var list = byId('prep-list');
       list.innerHTML = '';
       available.forEach(function (member) {
         var type = SC.UNIT_TYPES[member.type];
-        var threshold = SC.Regulars.getThreshold(member.type);
+        var threshold = SC.Regulars.getThreshold(member.id, member.type);
         var on = chosen.indexOf(member.id) >= 0;
         var card = document.createElement('button');
         card.type = 'button';
@@ -294,7 +304,7 @@
           '<span class="prep-art">' + (art ? '<img src="' + art + '" alt="">' : '') + '</span>' +
           '<span class="prep-text"><span class="prep-name">' + member.name + '隊<small>' + type.name + '</small></span>' +
           '<span class="prep-exp"><i style="width:' + gauge + '%"></i></span>' +
-          '<span class="prep-exp-label">' + (threshold ? '経験 ' + member.exp + '／' + threshold + (SC.Regulars.canRankUp(member.type, member.exp) ? '　ランクアップできる' : member.exp >= threshold ? '　（次のクラスはまだ）' : '') : '経験 ' + member.exp + '（これ以上ランクアップしない）') + '</span></span>';
+          '<span class="prep-exp-label">' + (threshold ? '経験 ' + member.exp + '／' + threshold + (SC.Regulars.canRankUp(member.id, member.type, member.exp) ? '　ランクアップできる' : member.exp >= threshold ? '　（次のクラスはまだ）' : '') : '経験 ' + member.exp + '（これ以上ランクアップしない）') + '</span></span>';
         card.onclick = function (event) {
           event.stopPropagation();
           var index = chosen.indexOf(member.id);

@@ -27,6 +27,7 @@
     if (escortType && slotIndex > 0) {
       path = getBattleArt(escortType, fighter.side) || getBattleArt(ESCORT_FALLBACK_TYPE, fighter.side);
     }
+    if (!path && fighter.regularId) path = SC.Render.getRegularArtPath(fighter.regularId, fighter.type, 'battle');   // 隊長ごとの姿
     path = path || getBattleArt(fighter.type, fighter.side) || SC.Render.getUnitImagePath(fighter.type, fighter.side);
     return path
       ? '<img src="' + path + '" alt="" draggable="false">'
