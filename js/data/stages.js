@@ -653,7 +653,7 @@
       goalText: '勝利：敵の王を倒す\n敗北：自軍の王が倒される',
       defeatHint: 'ゴーレムを正面から殴ると時間がかかります。魔法使いで崩すか、ワイバーンやハーピーで水路を越えて、奥のウィザードを先に倒そう。騎士は魔法使いに強いです。',
       rules: { zoneOfControl: true, economy: true, affinity: true, experience: true, maxUnits: 10, incomeScale: { enemy: 0.5 }, hireTypes: ['infantry', 'archer', 'cleric', 'cavalry', 'harpy', 'griffin', 'wyvern', 'mage'] },
-      gold: { player: 60, enemy: 80 },
+      gold: { player: 60, enemy: 60 },   // 初期G（自動対戦で調整。敵のプリーストを動けるようにしたので、敵は80から60に）
       music: 'map',
       battleMusic: null,
       bossMusic: 'boss',
@@ -688,7 +688,7 @@
         { type: 'king', side: 'enemy', x: 5, y: 0 },
         { type: 'infantry', side: 'enemy', x: 4, y: 0, role: 'guard' },
         { type: 'infantry', side: 'enemy', x: 6, y: 0, role: 'guard' },
-        { type: 'priest', side: 'enemy', x: 5, y: 1, role: 'guard' },
+        { type: 'priest', side: 'enemy', x: 5, y: 1 },   // 前線についていって祈る（2026-10-19 ユーザーの希望。前は王の守りで動かなかった）
         { type: 'archer', side: 'enemy', x: 6, y: 2 },
         { type: 'wizard', side: 'enemy', x: 3, y: 2 },
         { type: 'wizard', side: 'enemy', x: 8, y: 2 },
