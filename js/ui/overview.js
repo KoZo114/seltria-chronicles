@@ -2,7 +2,7 @@
 // 地形、町の旗（青・赤・旗なし）、部隊の位置（自軍は青の丸、敵軍は赤の四角、王は金のふち）、いま見えている範囲の枠を描く。
 (function (root) {
   var SC = (root.SC = root.SC || {});
-  var TERRAIN_COLORS = { plain: '#6da55a', forest: '#2f6b34', lake: '#3f7fc4', town: '#b58b5a', castle: '#8d8674', fort: '#a0a0aa' };
+  var TERRAIN_COLORS = { plain: '#6da55a', forest: '#2f6b34', lake: '#3f7fc4', town: '#b58b5a', castle: '#8d8674', fort: '#a0a0aa', swamp: '#5b6640', bramble: '#7d9a4a' };
   var SIDE_COLORS = { player: '#3d7ef0', enemy: '#e0453a' };
 
   // options: { state, viewRect, onPick(x, y), onClose }

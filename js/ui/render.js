@@ -91,6 +91,18 @@
       '<svg viewBox="0 0 48 48" aria-hidden="true">' +
       '<path d="M13 10 L22 28 L4 28 Z M34 8 L44 27 L24 27 Z M24 22 L35 42 L13 42 Z" fill="#2f6b34" stroke="#1d4722" stroke-width="1.5" stroke-linejoin="round"/>' +
       '</svg>',
+    // 沼と藪：絵が届くまでの仮の絵
+    swamp:
+      '<svg viewBox="0 0 48 48" aria-hidden="true">' +
+      '<ellipse cx="17" cy="20" rx="12" ry="6" fill="#4f5f3a" stroke="#2f3a22" stroke-width="1.5"/>' +
+      '<ellipse cx="32" cy="34" rx="12" ry="6" fill="#4f5f3a" stroke="#2f3a22" stroke-width="1.5"/>' +
+      '<path d="M10 12 V4 M14 13 V6 M38 27 V19 M42 28 V22" stroke="#3d5a2a" stroke-width="2" stroke-linecap="round"/>' +
+      '</svg>',
+    bramble:
+      '<svg viewBox="0 0 48 48" aria-hidden="true">' +
+      '<path d="M6 40 C10 26 18 30 22 18 C26 30 34 24 42 40 Z" fill="#5c7a2e" stroke="#33461a" stroke-width="1.5" stroke-linejoin="round"/>' +
+      '<path d="M12 34 l-3 -3 M20 26 l-3 -4 M28 28 l3 -4 M36 34 l3 -3" stroke="#e9e2c0" stroke-width="1.6" stroke-linecap="round"/>' +
+      '</svg>',
     castle:
       '<svg viewBox="0 0 48 48" aria-hidden="true">' +
       '<path d="M5 44 V12 H11 V17 H16 V12 H22 V17 H26 V12 H32 V17 H37 V12 H43 V44 Z" fill="#8d8674" stroke="#4f4a3c" stroke-width="1.5" stroke-linejoin="round"/>' +
@@ -554,10 +566,20 @@
   // ターンの始めの演出：収入（王の上に「＋40G」）と、補充された部隊（「＋2人」）
   function animateTurnStart(state, events, unitTypeById) {
     var shown = false;
+    var hazard = false;
     events.forEach(function (event) {
       if (event.type === 'income' && event.amount > 0) {
         var king = state.units.filter(function (u) { return u.side === event.side && SC.UNIT_TYPES[u.type].isKing; })[0];
         if (king) popupAt(king.x, king.y, '<span>＋' + event.amount + 'G</span>', 'gold');
+        shown = true;
+      }
+      if (event.type === 'hazard') {   // 沼・藪のダメージ
+        var hurt = unitElements[event.unitId];
+        if (!hurt) return;
+        setHp(hurt, unitTypeById[event.unitId], event.targetHp);
+        restartAnimation(hurt, 'shake', 320);
+        popupAt(Number(hurt.dataset.x), Number(hurt.dataset.y), '<small>' + SC.TERRAIN[event.terrainId].name + '</small><span>−' + event.damage + '</span>', 'hazard');
+        hazard = true;
         shown = true;
       }
       if (event.type === 'resupply') {
@@ -569,7 +591,7 @@
       }
     });
     if (!shown) return Promise.resolve();
-    SC.Sound.play('coin');
+    SC.Sound.play(hazard ? 'hit' : 'coin');
     return sleep(800);
   }
 

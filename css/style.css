@@ -393,6 +393,8 @@ body { position: fixed; inset: 0; }
   background: #a9cf86; display: block; cursor: pointer; overflow: hidden; }
 .tile.alt { background: #a2c97e; }
 .tile.t-forest { background: #6fa862; }
+.tile.t-swamp { background: #7c8a5a; }
+.tile.t-bramble { background: #8fae68; }
 .tile.t-castle { background: #cfc8b4; }
 /* 画像のマス：枠線を付けると絵が1px縮んでドットが乱れるので、枠線は上に重ねて描く */
 .tile.has-image { border: 0; background-size: 100% 100%; background-repeat: no-repeat; image-rendering: pixelated; }
@@ -444,6 +446,8 @@ body { position: fixed; inset: 0; }
 .outlook.disadvantage { background: #b02020; }
 .outlook.heal { background: #1f8f55; }
 .popup.heal { color: #8ff0b4; }
+.popup.hazard { color: #d6a8ff; }
+.popup.hazard small { display: block; font-size: 10px; letter-spacing: .1em; }
 .unit.blessed .unit-body { animation: blessed .7s ease-out; }
 @keyframes blessed { 0% { filter: brightness(1); } 30% { filter: brightness(1.9) drop-shadow(0 0 6px #a8ffcc); } 100% { filter: brightness(1); } }
 /* 兵士の印（●）：6人隊は2列×3、3人隊は1列×3。倒れた兵士は暗く、けが人は薄く、これから倒れる兵士は赤い縁取り */

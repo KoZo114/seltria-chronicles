@@ -328,6 +328,27 @@
     return waves[0] || null;
   }
 
+  // 沼・藪のダメージ（ターンの始めに、その上にいる部隊が受ける）。受けなければ 0
+  function getHazardDamage(state, unit, x, y) {
+    var terrain = SC.TERRAIN[state.terrain[y][x]];
+    if (!terrain.hazardPercent) return 0;
+    var moveType = SC.MOVE_TYPES[SC.UNIT_TYPES[unit.type].moveType] || {};
+    if (moveType.ignoresHazard) return 0;
+    return Math.ceil(SC.Combat.getMaxHp(unit.type) * terrain.hazardPercent / 100);
+  }
+
+  // ターンの始めの沼・藪のダメージ。全滅はしない（最後の1人の体力1は残る）
+  function applyHazards(state, side) {
+    var events = [];
+    getUnits(state, side).forEach(function (unit) {
+      var damage = Math.min(getHazardDamage(state, unit, unit.x, unit.y), unit.hp - 1);
+      if (damage <= 0) return;
+      unit.hp -= damage;
+      events.push({ type: 'hazard', unitId: unit.id, damage: damage, targetHp: unit.hp, terrainId: state.terrain[unit.y][unit.x] });
+    });
+    return events;
+  }
+
   function endTurn(state) {
     if (state.winner) return;
     state.side = otherSide(state.side);
@@ -343,7 +364,7 @@
       unit.justHired = false;
       if (unit.side === state.side) unit.braced = false;   // 自分のターンが始まったら、構えは解ける
     });
-    state.turnEvents = addReinforcements(state, state.side).concat(SC.Economy.startTurn(state, state.side));   // 増援、収入と補充
+    state.turnEvents = addReinforcements(state, state.side).concat(applyHazards(state, state.side), SC.Economy.startTurn(state, state.side));   // 増援、沼・藪のダメージ、収入と補充
   }
 
   SC.Game = {
@@ -362,6 +383,7 @@
     checkSummon: checkSummon,
     getSummonOdds: getSummonOdds,
     summonUnit: summonUnit,
-    getNextReinforcement: getNextReinforcement
+    getNextReinforcement: getNextReinforcement,
+    getHazardDamage: getHazardDamage
   };
 })(typeof window !== 'undefined' ? window : globalThis);

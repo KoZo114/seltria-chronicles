@@ -9,7 +9,7 @@
     SC.REGULARS.forEach(function (regular) {
       if (regular.joinStage > stageId) return;
       if (roster.some(function (member) { return member.id === regular.id; })) return;
-      roster.push({ id: regular.id, name: regular.name, type: regular.path[0], exp: 0 });
+      roster.push({ id: regular.id, name: regular.name, type: regular.path[0], exp: regular.startExp || 0 });
     });
     return roster;
   }

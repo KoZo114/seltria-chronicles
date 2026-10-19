@@ -42,6 +42,24 @@
       kingDamageReductionPercent: 0,
       description: '移動コスト1。受ける打撃が2減ります。歩兵か王が占領でき、毎ターン20G。王がいれば雇えます。'
     },
+    // 沼と藪（2026-10-19 ユーザーの希望）：ターンの始めにその上にいると、最大体力の hazardPercent ％（切り上げ）のダメージ。
+    // 地形のダメージでは全滅しない（最後の1人は残る）。空を飛ぶ部隊と地形無視の部隊は受けない（MOVE_TYPES の ignoresHazard）
+    swamp: {
+      name: '沼',
+      moveCost: 2,
+      defense: 0,
+      hazardPercent: 10,
+      kingDamageReductionPercent: 0,
+      description: '移動コスト2。ターンの始めにここにいると、最大体力の1割のダメージ（空を飛ぶ部隊は受けない）。'
+    },
+    bramble: {
+      name: '藪',
+      moveCost: 2,
+      defense: 1,
+      hazardPercent: 10,
+      kingDamageReductionPercent: 0,
+      description: '移動コスト2。受ける打撃が1減るが、ターンの始めにここにいると、最大体力の1割のダメージ（空を飛ぶ部隊は受けない）。'
+    },
     castle: {
       name: '城',
       moveCost: 1,
@@ -56,6 +74,7 @@
   //  flatCost：地形に関係なく、1マスあたりこのコストで進む（地形の影響を無視）
   //  canEnterImpassable：通れない地形（湖など）にも入れる（その上に止まることもできる）
   //  ignoresTerrainDefense：その地形にいても、地形の守り（森の防御+2など）を受けない
+  //  ignoresHazard：沼や藪のダメージを受けない
   // 「地形の影響を無視」と「通れない地形に入れる」は別の設定にしている（追加仕様の決まり）
   // 2026-10-14 決定：飛ぶ部隊は湖の上に止まれる。飛ぶ部隊とドラゴン（地形無視）は地形の守りを受けない。
   SC.MOVE_TYPES = {
@@ -63,7 +82,7 @@
     woodland: { name: '歩き（森が得意）', costOverrides: { forest: 1 } },
     mounted: { name: '馬（森が苦手）', costOverrides: { forest: 3 } },   // 騎士
     elven: { name: '森の民（森が得意・湖も渡れる）', costOverrides: { forest: 1, lake: 2 }, canEnterImpassable: true },   // ハイエルフ   // 弓兵がランクアップしたエルフ用（まだ使っていない）
-    flying: { name: '飛行', flatCost: 1, canEnterImpassable: true, ignoresTerrainDefense: true },
-    ignoreTerrain: { name: '地形無視', flatCost: 1, canEnterImpassable: true, ignoresTerrainDefense: true }   // ドラゴン用
+    flying: { name: '飛行', flatCost: 1, canEnterImpassable: true, ignoresTerrainDefense: true, ignoresHazard: true },
+    ignoreTerrain: { name: '地形無視', flatCost: 1, canEnterImpassable: true, ignoresTerrainDefense: true, ignoresHazard: true }   // ドラゴン用
   };
 })(typeof window !== 'undefined' ? window : globalThis);

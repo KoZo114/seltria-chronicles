@@ -25,6 +25,12 @@
     return !!king && !isKing(enemy) && SC.Board.distance(enemy, king) <= KING_GUARD_DISTANCE;
   }
 
+  // 沼・藪の上で止まると、次のターンの始めにダメージを受けるので、その分を減点する（兵士何人分か × 0.8）
+  function hazardPenalty(state, unit, destination) {
+    var damage = SC.Game.getHazardDamage(state, unit, destination.x, destination.y);
+    return damage > 0 ? (damage / SC.UNIT_TYPES[unit.type].soldierHp) * 0.8 + 0.3 : 0;
+  }
+
   // 攻撃の得点。「倒せる兵士の人数」をもとに、倒しきれる相手・敵の王・自分の王に近づいた敵を高くする
   function scoreAttack(state, unit, destination, target) {
     var forecast = SC.Combat.getForecast(state, unit, destination, target);
@@ -39,7 +45,7 @@
       score -= (forecast.counter.damage / SC.UNIT_TYPES[unit.type].soldierHp) * 0.5;
       if (forecast.counter.wipesOut) score -= 10;
     }
-    score += SC.Board.getTerrain(state, destination.x, destination.y).defense * 0.25;
+    score += SC.Board.getTerrain(state, destination.x, destination.y).defense * 0.25 - hazardPenalty(state, unit, destination);
     return score;
   }
 
@@ -118,7 +124,7 @@
       });
       var enemyDistance = nearestDistance(destination, enemies);
       if (enemyDistance <= 2) score -= (3 - enemyDistance) * 2;
-      score += SC.Board.getTerrain(state, destination.x, destination.y).defense * 0.3 - destination.cost * 0.01;
+      score += SC.Board.getTerrain(state, destination.x, destination.y).defense * 0.3 - destination.cost * 0.01 - hazardPenalty(state, unit, destination);
       if (!best || score > best.score) best = { unitId: unit.id, x: destination.x, y: destination.y, targetId: null, score: score };
     });
     return best;
@@ -216,7 +222,7 @@
     (destinations || getDestinations(state, unit)).forEach(function (destination) {
       var walked = toEnemy[destination.x + ',' + destination.y];
       var gap = Math.abs((walked === undefined ? 999 : walked) - preferredDistance);
-      var score = -gap + SC.Board.getTerrain(state, destination.x, destination.y).defense * 0.3 - destination.cost * 0.01;
+      var score = -gap + SC.Board.getTerrain(state, destination.x, destination.y).defense * 0.3 - destination.cost * 0.01 - hazardPenalty(state, unit, destination);
       if (!best || score > best.score) best = { unitId: unit.id, x: destination.x, y: destination.y, targetId: null, score: score };
     });
     return best;
@@ -289,5 +295,5 @@
     return mover ? findApproachMove(state, mover, enemies) : findHealerMove(state, units[0], enemies);
   }
 
-  SC.AI = { chooseAction: chooseAction, scoreAttack: scoreAttack, findBestPrayer: findBestPrayer, findHealerMove: findHealerMove, chooseSummonType: chooseSummonType };
+  SC.AI = { chooseAction: chooseAction, scoreAttack: scoreAttack, findBestPrayer: findBestPrayer, findHealerMove: findHealerMove, chooseSummonType: chooseSummonType, hazardPenalty: hazardPenalty };
 })(typeof window !== 'undefined' ? window : globalThis);

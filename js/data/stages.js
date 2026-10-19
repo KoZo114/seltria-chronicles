@@ -2,7 +2,7 @@
 (function (root) {
   var SC = (root.SC = root.SC || {});
 
-  SC.TERRAIN_SYMBOLS = { '.': 'plain', F: 'forest', C: 'castle', W: 'lake', T: 'town', S: 'fort' };
+  SC.TERRAIN_SYMBOLS = { '.': 'plain', F: 'forest', C: 'castle', W: 'lake', T: 'town', S: 'fort', M: 'swamp', B: 'bramble' };   // M：沼、B：藪
 
   SC.STAGES = {
     1: {
@@ -694,6 +694,67 @@
         { type: 'wizard', side: 'enemy', x: 8, y: 2 },
         { type: 'golem', side: 'enemy', x: 5, y: 5 },   // 真ん中の道を塞ぐ
         { type: 'golem', side: 'enemy', x: 10, y: 5 }   // 右の道を塞ぐ
+      ]
+    },
+    // ステージ15（2026-10-19 合意）：騎馬の大平原。敵は騎士が中心で、増援の騎士が横から来る。槍（相性+2・構え）が切り札。ブラン隊が加わる
+    15: {
+      id: 15,
+      title: 'ステージ15　騎馬の大平原',
+      intro: '魔導の都を抜けた王の軍の前に、どこまでも続く大平原が広がっていた。地平の向こうから、敵の騎馬隊の土煙が上がる。そこへ、一騎の若い騎士が駆けつけた。「ブランっていいます！ 馬なら、誰にも負けません！」',
+      newRule: 'cavalryPlain',
+      ruleNote: '新しい決まり：騎馬隊と、6つ目の正規部隊\n敵は騎士が中心で、増援の騎士が横からも駆けてきます。騎士は足が速く、斜めからも攻めてきます。槍（歩兵・ナイト・ジェネラル）は騎兵に強く（相性+2）、構えれば、近づいてきた騎士より先に突けます。正規部隊にブラン隊（騎士）が加わりました。経験値が40たまるとドラゴンナイトになります。',
+      goalText: '勝利：敵の王を倒す\n敗北：自軍の王が倒される',
+      defeatHint: '騎士は、歩兵やナイトを前に並べて構えれば止められます。弓兵・魔法使い・僧侶は騎士に弱いので、槍の後ろに置こう。こちらの騎士は、待機するときに敵のほうを向けて、背中を取られないように。',
+      rules: { zoneOfControl: true, economy: true, affinity: true, experience: true, maxUnits: 10, incomeScale: { enemy: 0.5 }, hireTypes: ['infantry', 'archer', 'cleric', 'cavalry', 'harpy', 'griffin', 'wyvern', 'mage'] },
+      gold: { player: 60, enemy: 40 },
+      music: 'map',
+      battleMusic: null,
+      bossMusic: 'boss',
+      map: [
+        '.....C......',
+        '..F......F..',
+        '.T........T.',
+        '............',
+        '...F....F...',
+        '............',
+        'F..........F',
+        '...S....S...',
+        '............',
+        'F..........F',
+        '.T...FF...T.',
+        '............',
+        '...F....F...',
+        '............',
+        '..F......F..',
+        '......C.....'
+      ],
+      towns: [
+        { x: 1, y: 2, owner: 'enemy' },
+        { x: 10, y: 2, owner: 'enemy' },
+        { x: 3, y: 7, owner: null },    // 砦
+        { x: 8, y: 7, owner: null },    // 砦
+        { x: 1, y: 10, owner: 'player' },
+        { x: 10, y: 10, owner: 'player' }
+      ],
+      regularSlots: [{ x: 5, y: 14 }, { x: 6, y: 14 }, { x: 7, y: 14 }, { x: 5, y: 15 }],
+      units: [
+        { type: 'king', side: 'player', x: 6, y: 15 },
+        { type: 'infantry', side: 'player', x: 4, y: 14 },   // 傭兵（騎士を止める槍）
+        { type: 'infantry', side: 'player', x: 8, y: 14 },   // 傭兵
+        { type: 'king', side: 'enemy', x: 5, y: 0 },
+        { type: 'infantry', side: 'enemy', x: 4, y: 0, role: 'guard' },
+        { type: 'infantry', side: 'enemy', x: 6, y: 0, role: 'guard' },
+        { type: 'priest', side: 'enemy', x: 5, y: 1 },
+        { type: 'archer', side: 'enemy', x: 3, y: 1 },
+        { type: 'archer', side: 'enemy', x: 7, y: 1 },
+        { type: 'cavalry', side: 'enemy', x: 3, y: 3 },
+        { type: 'cavalry', side: 'enemy', x: 6, y: 3 },
+        { type: 'cavalry', side: 'enemy', x: 8, y: 3 }
+      ],
+      reinforcements: [
+        { turn: 3, from: '西', units: [{ type: 'cavalry', x: 0, y: 5 }] },
+        { turn: 6, from: '東', units: [{ type: 'cavalry', x: 11, y: 5 }, { type: 'archer', x: 11, y: 4 }] },
+        { turn: 9, from: '北', units: [{ type: 'cavalry', x: 4, y: 1 }, { type: 'cavalry', x: 7, y: 2 }, { type: 'infantry', x: 6, y: 1 }] }
       ]
     }
   };

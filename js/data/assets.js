@@ -18,6 +18,8 @@
       ],
       forest: ['assets64/terrain/terrain_forest.png'],
       lake: ['assets64/terrain/terrain_water.png'],
+      swamp: ['assets64/terrain/terrain_swamp_1.png', 'assets64/terrain/terrain_swamp_2.png', 'assets64/terrain/terrain_swamp_3.png'],   // 沼（2・3枚目は1枚目を反転したもの）
+      bramble: ['assets64/terrain/terrain_bramble_1.png', 'assets64/terrain/terrain_bramble_2.png', 'assets64/terrain/terrain_bramble_3.png'],   // 藪
       castle: ['assets64/buildings/building_castle.png'],
       town: ['assets64/buildings/building_town.png'],
       fort: ['assets64/buildings/building_fort.png']   // 砦（tools/make-fort.py で描いた）
@@ -113,6 +115,8 @@
       backgrounds: {
         plain: 'assets64/battle/bg_plain.png',
         forest: 'assets64/battle/bg_forest.png',
+        swamp: 'assets64/battle/bg_swamp.png',
+        bramble: 'assets64/battle/bg_bramble.png',
         castle: 'assets64/battle/bg_castle.png',
         castle_enemy: 'assets64/battle/bg_castle_enemy.png',
         town: 'assets64/battle/bg_town.png',
@@ -144,7 +148,7 @@
       },
       // 戦闘用の絵が、まだ隊長の顔のままのクラス（一般の兵の絵が届いたら、ここから外す）。
       // 正規部隊は先頭だけ隊長の姿で、残りは一般の兵の絵になるが、ここにあるクラスは全員を隊長の姿にする（js/ui/battle-scene.js）
-      captainLook: ['elf', 'highElf', 'general', 'dragonKnight']   // 僧侶・プリースト・魔法使い・ウィザードは、一般の兵の絵が届いた（2026-10-19）
+      captainLook: ['general', 'dragonKnight']   // 僧侶・プリースト・魔法使い・ウィザード・エルフ・ハイエルフは、一般の兵の絵が届いた（2026-10-19）
     }
   };
 })(typeof window !== 'undefined' ? window : globalThis);

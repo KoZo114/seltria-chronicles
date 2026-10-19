@@ -13,7 +13,8 @@
     { id: 'sera', name: 'セラ', gender: 'female', joinStage: 11, path: ['cleric', 'priest', 'highPriest'], pathExp: [20, 30], rankUpLine: '祈りが、もっと遠くまで届きそうです。' },
     { id: 'noel', name: 'ノエル', gender: 'female', joinStage: 12, path: ['mage', 'wizard', 'saga'], pathExp: [20, 30], rankUpLine: 'ふふっ、新しい魔法、試してみたい！' },
     { id: 'gail', name: 'ガイル', gender: 'male', joinStage: 13, path: ['knight', 'general'], pathExp: [30], rankUpLine: '老いた盾にも、まだ守れるものがある。' },
-    { id: 'bran', name: 'ブラン', gender: 'male', joinStage: 15, path: ['cavalry', 'dragonKnight'], pathExp: [40], rankUpLine: 'へへっ、オレ、強くなったぜ！' }
+    // startExp：加わったときに持っている経験値（ブランは遅れて加わるので、最後の章までにドラゴンナイトになれるように。2026-10-19 ユーザー決定）
+    { id: 'bran', name: 'ブラン', gender: 'male', joinStage: 15, path: ['cavalry', 'dragonKnight'], pathExp: [40], startExp: 20, rankUpLine: 'へへっ、オレ、強くなったぜ！' }
   ];
 
   // 記録の形の版。育ち方を大きく変えたときに上げる（古い版の記録は、正規部隊だけ作り直す）
