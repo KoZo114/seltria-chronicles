@@ -92,6 +92,7 @@
         highElf: { map: 'assets64/units/unit_highElf_fina_player.png', battle: 'assets64/battle/battle_highElf_fina_player.png' }
       },
       gail: {
+        knight: { map: 'assets64/units/unit_knight_gail_player.png', battle: 'assets64/battle/battle_knight_gail_player.png' },
         general: { map: 'assets64/units/unit_general_gail_player.png', battle: 'assets64/battle/battle_general_gail_player.png' }
       }
     },
@@ -153,7 +154,7 @@
       },
       // 戦闘用の絵が、まだ隊長の顔のままのクラス（一般の兵の絵が届いたら、ここから外す）。
       // 正規部隊は先頭だけ隊長の姿で、残りは一般の兵の絵になるが、ここにあるクラスは全員を隊長の姿にする（js/ui/battle-scene.js）
-      captainLook: ['general', 'dragonKnight']   // 僧侶・プリースト・魔法使い・ウィザード・エルフ・ハイエルフは、一般の兵の絵が届いた（2026-10-19）
+      captainLook: ['dragonKnight']   // 僧侶・プリースト・魔法使い・ウィザード・エルフ・ハイエルフ（2026-10-19）、ジェネラル（2026-10-20）は、一般の兵の絵が届いた
     }
   };
 })(typeof window !== 'undefined' ? window : globalThis);
