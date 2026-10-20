@@ -31,7 +31,8 @@
     }
     // 正規部隊は、先頭（slotIndex 0。いちばん最後まで倒れない1人）だけ隊長の姿、残りは一般の兵の絵（2026-10-19 ユーザーの希望）。
     // ただし、一般の兵の絵がまだ隊長の顔の絵（battle.captainLook）のクラスは、全員を隊長の姿にする（別の隊長の顔が混ざらないように）
-    if (!path && fighter.regularId && (slotIndex === 0 || isCaptainLook(fighter.type))) {
+    // 一般の兵の戦闘用の絵がまだ無いクラス（サーガ・ハイプリーストなど）も、全員を隊長の姿にする（黒い仮の印にならないように）
+    if (!path && fighter.regularId && (slotIndex === 0 || isCaptainLook(fighter.type) || !getBattleArt(fighter.type, fighter.side))) {
       path = SC.Render.getRegularArtPath(fighter.regularId, fighter.type, 'battle');
     }
     path = path || getBattleArt(fighter.type, fighter.side) || SC.Render.getUnitImagePath(fighter.type, fighter.side);

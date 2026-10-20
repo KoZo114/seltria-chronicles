@@ -14,6 +14,7 @@
     if (!prayer) return 0;
     if (ally && SC.UNIT_TYPES[ally.type].size < 6) return prayer.heavyAmount || 0;
     var moved = position.x !== cleric.x || position.y !== cleric.y;
+    if (prayer.stillAll && !moved) return 6;   // ハイプリースト：動かずに祈ると全員戻す
     return Math.ceil(SC.Combat.getSoldierCount(cleric) / (moved ? prayer.movedDivisor : prayer.stillDivisor));
   }
 

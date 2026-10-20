@@ -190,7 +190,8 @@
     Object.keys(state.owners).forEach(function (k) {
       var parts = k.split(','), x = Number(parts[0]), y = Number(parts[1]);
       var terrainId = state.terrain[y][x];
-      if ((terrainId !== 'town' && terrainId !== 'fort') || state.owners[k] === unit.side) return;
+      var kind = SC.terrainKind(terrainId);
+      if ((kind !== 'town' && kind !== 'fort') || state.owners[k] === unit.side) return;
       var d = fromUnit[k];
       if (d === undefined) return;
       if (!best || d < best.d) best = { x: x, y: y, d: d };
@@ -271,6 +272,7 @@
 
   // 次に行う1ユニット分の行動を返す。全員が行動済みなら null。
   function chooseAction(state, side) {
+    SC.Board.useState(state);
     var action = chooseActionWithoutFacing(state, side);
     return addFacing(state, action, SC.Game.getUnits(state, SC.Game.otherSide(side)));
   }

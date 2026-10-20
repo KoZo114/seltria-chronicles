@@ -20,6 +20,8 @@
   var FACING_NAMES = { up: '上', down: '下', left: '左', right: '右' };
 
   var TIPS = {
+    highPriest: 'ハイプリーストは、動かずに祈ると6人隊の倒れた兵士を全員戻せます。3人隊には2人戻せます。祈った味方は、次の自分の番が始まるまで守りが1上がります（右に白い盾の印）。',
+    saga: 'サーガの召喚は必ず成功します。スケルトンは6人、ゴーレムは3人そろって現れます。',
     wizard: 'ウィザードは、動く前なら「スケルトン」か「ゴーレム」を選んで、隣に呼べます。スケルトンは最大4人（1人ずつ70％）、ゴーレムは最大2人（1人ずつ50％）。ゴーレムは硬い壁ですが、魔法に弱く、足が遅いです。',
     priest: 'プリーストは、6人隊に加えて、3人隊（騎士・グリフォン・ワイバーンなど）にも祈れます。3人隊に祈ると、1人戻せます（王と、召喚で出た部隊は戻せません）。',
     summon: '魔法使いは、動く前ならコマンド「召喚」で、隣にスケルトンを呼べます（1人ずつ半分の確率で、最大3人）。呼んだスケルトンは、すぐ動けます。',
@@ -80,6 +82,8 @@
   }
 
   function prepareBoard() {
+    if (!state.blockOf) state.blockOf = SC.Board.findBlocks(state.terrain);   // 2×2の建物（前の版の続きから遊ぶとき）
+    SC.Board.useState(state);
     unitTypeById = {};
     pendingArrivals = {};
     state.units.forEach(function (unit) { unitTypeById[unit.id] = unit.type; });
@@ -136,6 +140,9 @@
 
   function onTileTap(x, y) {
     if (!isPlayerInputOpen()) return;
+    SC.Board.useState(state);
+    var anchor = SC.Board.canonical(state, x, y);   // 2×2の建物のどのマスを押しても、建物を押したことにする
+    x = anchor.x; y = anchor.y;
     SC.Screens.hideToast();
     var tapped = SC.Board.getUnitAt(state, x, y);
 
@@ -232,7 +239,9 @@
     var canReachForest = selection.reach.some(function (tile) {
       return state.terrain[tile.y][tile.x] === 'forest' && !(tile.x === unit.x && tile.y === unit.y);
     });
-    if (unitType(unit).summon && unitType(unit).summon.types.length > 1) showTipOnce('wizard');
+    if (unitType(unit).summon && unitType(unit).summon.chancePercent >= 100) showTipOnce('saga');
+    else if (unitType(unit).prayer && unitType(unit).prayer.stillAll) showTipOnce('highPriest');
+    else if (unitType(unit).summon && unitType(unit).summon.types.length > 1) showTipOnce('wizard');
     else if (unitType(unit).summon) showTipOnce('summon');
     else if (unitType(unit).prayer && unitType(unit).prayer.heavyAmount) showTipOnce('priest');
     else if (stage.newRule === 'siege' && (unitType(unit).isKing || unitType(unit).capturesTowns)) showTipOnce('fort');
@@ -1073,7 +1082,7 @@
     var affinityLine = state.rules.affinity ? describeAffinity(type) : '';
     return '<div class="info-row">' + portrait + '<div class="info-text">' +
       unitNameHtml(unit) + '　<b>' + SC.Combat.getSoldierCount(unit) + '</b>人／' + type.size + '人' +
-      (unit.braced ? '　<span class="strong">構え中</span>' : '') + (unit.acted && !unit.braced ? '　<span class="dim">行動済み</span>' : '') +
+      (unit.braced ? '　<span class="strong">構え中</span>' : '') + (unit.blessing ? '　<span class="strong">守り+' + unit.blessing + '</span>' : '') + (unit.acted && !unit.braced ? '　<span class="dim">行動済み</span>' : '') +
       (affinityLine ? ' ' + affinityLine : '') + '<br>' +
       '1人あたり 攻撃' + type.attack + ' 体力' + type.soldierHp + '　移動' + type.move + ' ' + describeRange(type) + '<br>' +
       '<span class="dim">' + lastLine + '</span></div></div>';
@@ -1133,6 +1142,7 @@
     } else {
       note = '動かずに祈ると、多く戻せます';
     }
+    if (unitType(unit).prayer.defenseBuff) note += '。祈った味方は守り+' + unitType(unit).prayer.defenseBuff + '（次の自分の番まで）';
     return '<span class="name">' + unitType(unit).name + ' → ' + unitType(ally).name + '</span>　<span class="outlook heal">祈り</span><br>' +
       unitType(ally).name + ' ' + forecast.soldiersBefore + '人 → <b>' + forecast.soldiersAfter + '人</b>' +
       '<span class="strong">（＋' + forecast.restored + '人）</span><br>' +

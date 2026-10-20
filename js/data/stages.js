@@ -2,7 +2,7 @@
 (function (root) {
   var SC = (root.SC = root.SC || {});
 
-  SC.TERRAIN_SYMBOLS = { '.': 'plain', F: 'forest', C: 'castle', W: 'lake', T: 'town', S: 'fort', M: 'swamp', B: 'bramble' };   // M：沼、B：藪
+  SC.TERRAIN_SYMBOLS = { '.': 'plain', F: 'forest', C: 'castle', W: 'lake', T: 'town', S: 'fort', M: 'swamp', B: 'bramble', G: 'graveyard', A: 'cathedral', X: 'wall' };   // M：沼、B：藪、G：墓地、A：大聖堂、X：城壁
 
   SC.STAGES = {
     1: {
@@ -808,6 +808,69 @@
       ],
       reinforcements: [
         { turn: 10, from: '沼の奥', units: [{ type: 'dragon', x: 6, y: 3 }] }   // 2体目（自動対戦で調整。6ターン目だと勝ちにくすぎた）
+      ]
+    },
+    // ステージ17（2026-10-20 合意）：死者の都。敵の魔導士がスケルトンを次々に呼ぶ。ハイプリーストとサーガ。大聖堂（砦と同じしくみ）と墓地（不死はダメージを受けない）
+    17: {
+      id: 17,
+      title: 'ステージ17　死者の都',
+      intro: '沼地を抜けた王の軍は、霧の奥に沈む古い都にたどり着いた。崩れた大聖堂のまわりで、骨の兵がうごめいている。「死者を呼ぶ魔導士がいる……でも、わたしたちの祈りと魔法なら、負けません」セラとノエルが前に出た。',
+      newRule: 'undeadCity',
+      ruleNote: '新しい決まり：ハイプリーストとサーガ、墓地と大聖堂\nセラ隊は経験値が満タンになるとハイプリーストに、ノエル隊はサーガになります。ハイプリーストは動かずに祈ると6人隊を全員戻し、守りも1上げます。サーガの召喚は必ず成功します。墓地は藪と同じく、止まると体力が減ります（不死のスケルトンは平気）。大聖堂は砦と同じく、占領すると毎ターン20G入り、王がいれば雇えます。回復の系統は不死に強い（相性+2）。',
+      goalText: '勝利：敵の王を倒す\n敗北：自軍の王が倒される',
+      defeatHint: 'スケルトンを呼ぶ敵のウィザードと魔法使いを、先に倒そう。騎士は魔法使いに強く、空の部隊なら水路を越えられます。僧侶とプリーストは、スケルトンに強いです。墓地の上で止まると体力が減ります。',
+      rules: { zoneOfControl: true, economy: true, affinity: true, experience: true, maxUnits: 10, incomeScale: { enemy: 0.5 }, hireTypes: ['infantry', 'archer', 'cleric', 'cavalry', 'harpy', 'griffin', 'wyvern', 'mage'] },
+      gold: { player: 60, enemy: 40 },
+      music: 'map',
+      battleMusic: null,
+      bossMusic: 'boss',
+      // 2×2の建物（2026-10-20 ユーザーの希望）：城（CC/CC）はマップの端にくっつけ、左右の奥に城壁（X）。城を囲めるのは最大4部隊（1マスの城と同じ）。
+      // 大聖堂（AA/AA）は真ん中。まわり8マスから攻められる取り合いの拠点
+      map: [
+        '..G.XCCX..G.',
+        '.T.G.CC.G.T.',
+        '............',
+        'WW..G..G..WW',
+        '.G........G.',
+        '...GG..GG...',
+        'W....AA....W',
+        '...GGAAGG...',
+        '.G........G.',
+        'WW..G..G..WW',
+        '............',
+        '.T.G....G.T.',
+        '..G..CC..G..',
+        '....XCCX....'
+      ],
+      towns: [
+        { x: 1, y: 1, owner: 'enemy' },
+        { x: 10, y: 1, owner: 'enemy' },
+        { x: 5, y: 6, owner: null },    // 大聖堂（2×2の左上のマス）
+        { x: 1, y: 11, owner: 'player' },
+        { x: 10, y: 11, owner: 'player' }
+      ],
+      regularSlots: [{ x: 4, y: 12 }, { x: 5, y: 11 }, { x: 6, y: 11 }, { x: 7, y: 12 }],
+      units: [
+        { type: 'king', side: 'player', x: 5, y: 12 },
+        { type: 'cleric', side: 'player', x: 4, y: 11 },   // 傭兵（不死に強い）
+        { type: 'king', side: 'enemy', x: 5, y: 0 },
+        { type: 'general', side: 'enemy', x: 4, y: 1, role: 'guard' },   // 王の守り（2×2の城にしたら勝ちやすくなったので、歩兵からジェネラルに。2026-10-20）
+        { type: 'general', side: 'enemy', x: 7, y: 1, role: 'guard' },
+        { type: 'archer', side: 'enemy', x: 6, y: 2 },
+        { type: 'wizard', side: 'enemy', x: 3, y: 2 },
+        { type: 'wizard', side: 'enemy', x: 8, y: 2 },
+        { type: 'mage', side: 'enemy', x: 2, y: 2 },
+        { type: 'mage', side: 'enemy', x: 9, y: 2 },
+        { type: 'skeleton', side: 'enemy', x: 2, y: 4 },
+        { type: 'skeleton', side: 'enemy', x: 5, y: 4 },
+        { type: 'skeleton', side: 'enemy', x: 6, y: 4 },
+        { type: 'skeleton', side: 'enemy', x: 9, y: 4 }
+      ],
+      // 倒しても倒しても、墓地から骨の兵が湧いてくる（2026-10-20 自動対戦で追加。2×2の城にしたら100％・平均10〜14ターンで易しすぎた）
+      reinforcements: [
+        { turn: 4, from: '墓地', units: [{ type: 'skeleton', x: 1, y: 4 }, { type: 'skeleton', x: 10, y: 4 }, { type: 'golem', x: 6, y: 3 }] },
+        { turn: 7, from: '墓地', units: [{ type: 'skeleton', x: 1, y: 8 }, { type: 'skeleton', x: 10, y: 8 }, { type: 'wizard', x: 6, y: 2 }] },
+        { turn: 10, from: '墓地', units: [{ type: 'skeleton', x: 3, y: 5 }, { type: 'skeleton', x: 8, y: 5 }, { type: 'golem', x: 5, y: 3 }] }
       ]
     }
   };

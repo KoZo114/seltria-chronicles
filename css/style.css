@@ -219,6 +219,10 @@ body { position: fixed; inset: 0; }
   background: linear-gradient(180deg, #fff1b8, #e3b24a); }
 .gold-chip small { font-size: 10px; font-weight: 700; }
 /* 町の旗：自軍は青、敵軍は赤、中立は出さない */
+/* 止まると体力が減る地形（沼・藪・墓地）の印：右上の小さな紫のしずく（部隊がいるマスでは部隊の下に隠れる。止まる場所を選ぶときに見えればよい） */
+.tile .hazard-mark { position: absolute; z-index: 1; right: 1px; top: 1px; width: 11px; height: 11px; pointer-events: none;
+  background: center / contain no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2 C12 2 4 11 4 15.5 A8 8 0 0 0 20 15.5 C20 11 12 2 12 2 Z' fill='%23b26bff' stroke='%23250a3d' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M9 15 a3 3 0 0 0 3 3' fill='none' stroke='%23f1e3ff' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,.7)); }
 .tile .owner-flag { position: absolute; z-index: 1; left: 50%; top: 2px; width: 12px; height: 12px; margin-left: -2px; pointer-events: none; display: none; }
 .tile .owner-flag::before { content: ""; position: absolute; left: 0; top: 0; width: 2px; height: 12px; background: #3a2a1a; }
 .tile .owner-flag::after { content: ""; position: absolute; left: 2px; top: 0; width: 9px; height: 6px; border: 1px solid #1a1423; }
@@ -384,7 +388,11 @@ body { position: fixed; inset: 0; }
 .overview-note { margin: 2px 0 10px; font-size: 12px; color: var(--text-dim); }
 #tiles { display: grid; }
 /* 重なり順：マス → ユニット → ダメージ表示。選択枠の付いたマスがユニットを隠さないようにする */
-#units, #effects { position: absolute; inset: 0; pointer-events: none; }
+#units, #effects, #decor { position: absolute; inset: 0; pointer-events: none; }
+/* 2×2の建物（城・大聖堂）の大きな絵：4マスにぴったり重ねる。部隊とマスの色（動ける範囲など）より下、マスの絵より上 */
+#decor { z-index: 1; }
+#decor .big-building { position: absolute; left: 0; top: 0; width: calc(var(--tile) * 2); height: calc(var(--tile) * 2); image-rendering: pixelated;
+  transform: translate(calc(var(--tile) * var(--bx)), calc(var(--tile) * var(--by))); filter: drop-shadow(0 2px 2px rgba(0,0,0,.35)); }
 #units { z-index: 2; }
 #effects { z-index: 3; }
 
@@ -395,12 +403,15 @@ body { position: fixed; inset: 0; }
 .tile.t-forest { background: #6fa862; }
 .tile.t-swamp { background: #7c8a5a; }
 .tile.t-bramble { background: #8fae68; }
+.tile.t-graveyard { background: #9a9f8a; }
+.tile.t-cathedral { background: #b9c49a; }
+.tile.t-wall { background: #a9cf86; }
 .tile.t-castle { background: #cfc8b4; }
 /* 画像のマス：枠線を付けると絵が1px縮んでドットが乱れるので、枠線は上に重ねて描く */
 .tile.has-image { border: 0; background-size: 100% 100%; background-repeat: no-repeat; image-rendering: pixelated; }
 .tile.has-image::before { content: ""; position: absolute; inset: 0; pointer-events: none; box-shadow: inset -1px -1px 0 rgba(0,0,0,.16); }
 .tile svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-.tile::after { content: ""; position: absolute; inset: 0; pointer-events: none; }
+.tile::after { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 2; }   /* 大きな建物の絵（#decor）より上に出す */
 /* 移動できるマス：青＋中央の点 */
 .tile.move::after { background: radial-gradient(circle, rgba(255,255,255,.9) 0 9%, rgba(40,110,255,.5) 11%); box-shadow: inset 0 0 0 1px rgba(20,70,200,.6); }
 /* 攻撃が届くマス：赤い斜線 */
@@ -410,13 +421,32 @@ body { position: fixed; inset: 0; }
 /* 敵が移動できるマス：橙 */
 .tile.ally::after { background: rgba(60,220,120,.35); box-shadow: inset 0 0 0 3px #3ddc84; animation: target-pulse .8s ease-in-out infinite alternate; }
 /* なわばり：移動できるマスのうち、入ると止まるマスに赤い点。敵をタップしたときは、その敵のなわばりを赤い点線で囲む */
-.tile.zone::before { content: ""; position: absolute; z-index: 1; left: auto; bottom: auto; right: 3px; top: 3px; width: 8px; height: 8px; border-radius: 50%;
+.tile.zone::before { content: ""; position: absolute; z-index: 2; left: auto; bottom: auto; right: 3px; top: 3px; width: 8px; height: 8px; border-radius: 50%;
   background: #ff3b30; box-shadow: 0 0 0 1.5px #fff; pointer-events: none; }
 .tile.enemy-zone { box-shadow: inset 0 0 0 2px rgba(255,59,48,.85); }
-.tile.enemy-zone::before { content: ""; position: absolute; z-index: 1; inset: 3px; border: 2px dashed rgba(255,255,255,.75); border-radius: 3px; pointer-events: none; }
+.tile.enemy-zone::before { content: ""; position: absolute; z-index: 2; inset: 3px; border: 2px dashed rgba(255,255,255,.75); border-radius: 3px; pointer-events: none; }
 .tile.danger::after { background: rgba(255,160,0,.5); box-shadow: inset 0 0 0 1px rgba(170,90,0,.6); }
 .tile.cursor { box-shadow: inset 0 0 0 3px #ffe45c; }
 .tile.cursor::after { box-shadow: inset 0 0 0 3px #ffe45c; }
+/* 2×2の建物：4マスの間の線を消し、色の枠は建物の外側だけに描く。移動できるときの白い点は、建物の真ん中に1つ */
+.tile.in-block.has-image::before { box-shadow: none; }
+.tile.bk-tr.has-image::before { box-shadow: inset -1px 0 0 rgba(0,0,0,.16); }
+.tile.bk-bl.has-image::before { box-shadow: inset 0 -1px 0 rgba(0,0,0,.16); }
+.tile.bk-br.has-image::before { box-shadow: inset -1px -1px 0 rgba(0,0,0,.16); }
+.tile.in-block.cursor { box-shadow: none; }
+.tile.in-block.move::after { --rw: 1px; --rc: rgba(20,70,200,.6); }
+.tile.in-block.target::after { --rw: 3px; --rc: #ff2a2a; }
+.tile.in-block.ally::after { --rw: 3px; --rc: #3ddc84; }
+.tile.in-block.danger::after { --rw: 1px; --rc: rgba(170,90,0,.6); }
+.tile.in-block.cursor::after { --rw: 3px; --rc: #ffe45c; }
+.tile.bk-tl:is(.move, .target, .ally, .danger, .cursor)::after { box-shadow: inset var(--rw) var(--rw) 0 0 var(--rc); }
+.tile.bk-tr:is(.move, .target, .ally, .danger, .cursor)::after { box-shadow: inset calc(var(--rw) * -1) var(--rw) 0 0 var(--rc); }
+.tile.bk-bl:is(.move, .target, .ally, .danger, .cursor)::after { box-shadow: inset var(--rw) calc(var(--rw) * -1) 0 0 var(--rc); }
+.tile.bk-br:is(.move, .target, .ally, .danger, .cursor)::after { box-shadow: inset calc(var(--rw) * -1) calc(var(--rw) * -1) 0 0 var(--rc); }
+.tile.bk-tl.move::after { background: radial-gradient(circle at 100% 100%, rgba(255,255,255,.9) 0 4.5%, rgba(40,110,255,.5) 5.5%); }
+.tile.bk-tr.move::after { background: radial-gradient(circle at 0% 100%, rgba(255,255,255,.9) 0 4.5%, rgba(40,110,255,.5) 5.5%); }
+.tile.bk-bl.move::after { background: radial-gradient(circle at 100% 0%, rgba(255,255,255,.9) 0 4.5%, rgba(40,110,255,.5) 5.5%); }
+.tile.bk-br.move::after { background: radial-gradient(circle at 0% 0%, rgba(255,255,255,.9) 0 4.5%, rgba(40,110,255,.5) 5.5%); }
 @keyframes target-pulse { from { opacity: .65; } to { opacity: 1; } }
 
 /* ユニット */
@@ -468,6 +498,9 @@ body { position: fixed; inset: 0; }
 /* 構え中の印（右上の金の盾）。構えている部隊は、行動済みでも暗くしない（構えて待っていることが分かるように） */
 .unit .brace-mark { display: none; position: absolute; right: 0; top: 0; width: 15px; height: 15px; background: center / contain no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2 L21 5 V11.5 C21 17 17 20.5 12 22.5 C7 20.5 3 17 3 11.5 V5 Z' fill='%23f2c94c' stroke='%235a4300' stroke-width='1.6' stroke-linejoin='round'/%3E%3Cpath d='M12 6 V18' stroke='%235a4300' stroke-width='2'/%3E%3C/svg%3E"); filter: drop-shadow(0 1px 1px rgba(0,0,0,.8)); }
 .unit.braced .brace-mark { display: block; }
+/* ハイプリーストの祈りの守り+1：右側（構えの印の下）に白い盾 */
+.unit .bless-mark { display: none; position: absolute; right: 0; top: 15px; width: 14px; height: 14px; background: center / contain no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2 L21 5 V11.5 C21 17 17 20.5 12 22.5 C7 20.5 3 17 3 11.5 V5 Z' fill='%23eaf6ff' stroke='%232b5a8a' stroke-width='1.6' stroke-linejoin='round'/%3E%3Cpath d='M12 7 V17 M7 12 H17' stroke='%232b5a8a' stroke-width='2.2'/%3E%3C/svg%3E"); filter: drop-shadow(0 1px 1px rgba(0,0,0,.8)); }
+.unit.blessed-guard .bless-mark { display: block; }
 .unit.braced.acted .unit-body { filter: brightness(.9); }
 .unit.braced.acted .done-mark { display: none; }
 .unit.acted .done-mark { display: block; }

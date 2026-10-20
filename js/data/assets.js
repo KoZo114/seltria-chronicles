@@ -18,8 +18,11 @@
       ],
       forest: ['assets64/terrain/terrain_forest.png'],
       lake: ['assets64/terrain/terrain_water.png'],
-      swamp: ['assets64/terrain/terrain_swamp_1.png', 'assets64/terrain/terrain_swamp_2.png', 'assets64/terrain/terrain_swamp_3.png'],   // 沼（2・3枚目は1枚目を反転したもの）
+      swamp: ['assets64/terrain/terrain_swamp_1.png', 'assets64/terrain/terrain_swamp_2.png'],   // 沼（2026-10-20 紫の毒の沼に描き直し。2枚目は左右の反転。上下は反転しない）
       bramble: ['assets64/terrain/terrain_bramble_1.png', 'assets64/terrain/terrain_bramble_2.png', 'assets64/terrain/terrain_bramble_3.png'],   // 藪
+      graveyard: ['assets64/terrain/terrain_graveyard_1.png', 'assets64/terrain/terrain_graveyard_2.png'],   // 墓地（ステージ17から。2枚目は左右の反転。上下は反転しない）
+      cathedral: ['assets64/terrain/terrain_cathedral_1.png'],   // 大聖堂（ステージ17から。砦と同じしくみ）
+      wall: ['assets64/terrain/terrain_wall_1.png'],   // 城壁（2×2の城の左右の奥）
       castle: ['assets64/buildings/building_castle.png'],
       town: ['assets64/buildings/building_town.png'],
       fort: ['assets64/buildings/building_fort.png']   // 砦（tools/make-fort.py で描いた）
@@ -40,6 +43,8 @@
       wizard: { player: 'assets64/units/unit_wizard_player.png', enemy: 'assets64/units/unit_wizard_enemy.png' },   // ウィザード（ステージ14から）
       golem: { player: 'assets64/units/unit_golem_player.png', enemy: 'assets64/units/unit_golem_enemy.png' },   // ゴーレム（ステージ14から）
       dragon: { player: 'assets64/units/unit_dragon_player.png', enemy: 'assets64/units/unit_dragon_enemy.png' },   // ドラゴン（ステージ16から）
+      saga: { player: 'assets64/units/unit_saga_player.png', enemy: 'assets64/units/unit_saga_enemy.png' },   // サーガ（一般の兵）
+      highPriest: { player: 'assets64/units/unit_highPriest_player.png', enemy: 'assets64/units/unit_highPriest_enemy.png' },   // ハイプリースト（一般の兵）
       elf: { player: 'assets64/units/unit_elf_player.png', enemy: 'assets64/units/unit_elf_enemy.png' },   // エルフ
       wyvern: { player: 'assets64/units/unit_wyvern_player.png', enemy: 'assets64/units/unit_wyvern_enemy.png' },   // ワイバーン
       general: { player: 'assets64/units/unit_general_player.png', enemy: 'assets64/units/unit_general_enemy.png' },   // ジェネラル
@@ -75,17 +80,26 @@
       background: 'assets64/hire/hire_bg.png'
     },
     // 隊長ごとの絵（同じクラスでも、隊長によって姿が違うもの）：隊長 → クラス → { map, battle }。無ければクラスの絵
+    // 2×2の建物（城・大聖堂。2026-10-20）の大きな絵（128×128）。マップで2×2に並べた建物だけに使う（1マスの城は、今までの絵）。
+    // 今の絵は tools/make-big-buildings.py で今の絵から作った仮のもの（大きな絵を描いてもらったら差し替える）
+    bigBuildings: {
+      castle: 'assets64/buildings/big_castle.png',
+      castle_enemy: 'assets64/buildings/big_castle_enemy.png',   // 敵の城（屋根と旗を赤に変えたもの）
+      cathedral: 'assets64/buildings/big_cathedral.png'
+    },
     regularArt: {
       aldo: { dragonKnight: { map: 'assets64/units/unit_dragonKnight_aldo_player.png', battle: 'assets64/battle/battle_dragonKnight_aldo_player.png' } },
       bran: { dragonKnight: { map: 'assets64/units/unit_dragonKnight_bran_player.png', battle: 'assets64/battle/battle_dragonKnight_bran_player.png' } },
       // セラ・ノエル・フィーナの姿（2026-10-19。雇う部隊と敵には、一般の兵の絵を使う）
       sera: {
         cleric: { map: 'assets64/units/unit_cleric_sera_player.png', battle: 'assets64/battle/battle_cleric_sera_player.png' },
-        priest: { map: 'assets64/units/unit_priest_sera_player.png', battle: 'assets64/battle/battle_priest_sera_player.png' }
+        priest: { map: 'assets64/units/unit_priest_sera_player.png', battle: 'assets64/battle/battle_priest_sera_player.png' },
+        highPriest: { map: 'assets64/units/unit_highPriest_sera_player.png', battle: 'assets64/battle/battle_highPriest_sera_player.png' }   // ステージ17から
       },
       noel: {
         mage: { map: 'assets64/units/unit_mage_noel_player.png', battle: 'assets64/battle/battle_mage_noel_player.png' },
-        wizard: { map: 'assets64/units/unit_wizard_noel_player.png', battle: 'assets64/battle/battle_wizard_noel_player.png' }
+        wizard: { map: 'assets64/units/unit_wizard_noel_player.png', battle: 'assets64/battle/battle_wizard_noel_player.png' },
+        saga: { map: 'assets64/units/unit_saga_noel_player.png', battle: 'assets64/battle/battle_saga_noel_player.png' }   // ステージ17から
       },
       fina: {
         elf: { map: 'assets64/units/unit_elf_fina_player.png', battle: 'assets64/battle/battle_elf_fina_player.png' },
@@ -122,6 +136,8 @@
         forest: 'assets64/battle/bg_forest.png',
         swamp: 'assets64/battle/bg_swamp.png',
         bramble: 'assets64/battle/bg_bramble.png',
+        graveyard: 'assets64/battle/bg_graveyard.png',
+        cathedral: 'assets64/battle/bg_cathedral.png',
         castle: 'assets64/battle/bg_castle.png',
         castle_enemy: 'assets64/battle/bg_castle_enemy.png',
         town: 'assets64/battle/bg_town.png',
@@ -146,6 +162,8 @@
         wizard: { player: 'assets64/battle/battle_wizard_player.png', enemy: 'assets64/battle/battle_wizard_enemy.png' },
         golem: { player: 'assets64/battle/battle_golem_player.png', enemy: 'assets64/battle/battle_golem_enemy.png' },
         dragon: { player: 'assets64/battle/battle_dragon_player.png', enemy: 'assets64/battle/battle_dragon_enemy.png' },
+        saga: { player: 'assets64/battle/battle_saga_player.png', enemy: 'assets64/battle/battle_saga_enemy.png' },
+        highPriest: { player: 'assets64/battle/battle_highPriest_player.png', enemy: 'assets64/battle/battle_highPriest_enemy.png' },
         elf: { player: 'assets64/battle/battle_elf_player.png', enemy: 'assets64/battle/battle_elf_enemy.png' },
         wyvern: { player: 'assets64/battle/battle_wyvern_player.png', enemy: 'assets64/battle/battle_wyvern_enemy.png' },
         general: { player: 'assets64/battle/battle_general_player.png', enemy: 'assets64/battle/battle_general_enemy.png' },

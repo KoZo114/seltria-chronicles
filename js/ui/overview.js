@@ -2,7 +2,7 @@
 // 地形、町の旗（青・赤・旗なし）、部隊の位置（自軍は青の丸、敵軍は赤の四角、王は金のふち）、いま見えている範囲の枠を描く。
 (function (root) {
   var SC = (root.SC = root.SC || {});
-  var TERRAIN_COLORS = { plain: '#6da55a', forest: '#2f6b34', lake: '#3f7fc4', town: '#b58b5a', castle: '#8d8674', fort: '#a0a0aa', swamp: '#5b6640', bramble: '#7d9a4a' };
+  var TERRAIN_COLORS = { plain: '#6da55a', forest: '#2f6b34', lake: '#3f7fc4', town: '#b58b5a', castle: '#8d8674', fort: '#a0a0aa', swamp: '#5b6640', bramble: '#7d9a4a', graveyard: '#6b6f78', cathedral: '#c9c3d6', wall: '#7d786c' };
   var SIDE_COLORS = { player: '#3d7ef0', enemy: '#e0453a' };
 
   // options: { state, viewRect, onPick(x, y), onClose }
@@ -61,7 +61,7 @@
         if (image) context.drawImage(image, x * cell, y * cell, cell, cell);
         else { context.fillStyle = TERRAIN_COLORS[terrainId] || '#666'; context.fillRect(x * cell, y * cell, cell, cell); }
         var owner = state.owners && state.owners[x + ',' + y];
-        if ((terrainId === 'town' || terrainId === 'fort') && owner) drawFlag(context, x, y, cell, SIDE_COLORS[owner]);
+        if ((SC.terrainKind(terrainId) === 'town' || SC.terrainKind(terrainId) === 'fort') && owner) drawFlag(context, x, y, cell, SIDE_COLORS[owner]);
       }
     }
     // マスの境目をうっすら

@@ -59,7 +59,7 @@
     var extra = usesAffinity(state) ? ((SC.UNIT_TYPES[attacker.type].bonusAgainst || {})[defenderType.family] || 0) : 0;
     affinity += extra;
     var attack = SC.UNIT_TYPES[attacker.type].attack + affinity;
-    var defense = SC.UNIT_TYPES[defender.type].defense + terrainDefense;
+    var defense = SC.UNIT_TYPES[defender.type].defense + terrainDefense + (defender.blessing || 0);   // blessing：ハイプリーストの祈りの守り+1
     // 空からの攻撃に弱い部隊（ジェネラル）は、飛行の系統から攻められると防御が下がる
     if (defenderType.defenseVsFlying && SC.UNIT_TYPES[attacker.type].family === 'flying') defense = Math.max(0, defense - defenderType.defenseVsFlying);
     return {

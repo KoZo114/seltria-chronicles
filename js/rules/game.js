@@ -22,13 +22,16 @@
     var terrain = stage.map.map(function (row) {
       return row.split('').map(function (symbol) { return SC.TERRAIN_SYMBOLS[symbol]; });
     });
+    var blockOf = SC.Board.findBlocks(terrain);   // 2×2の建物（城・大聖堂）
+    SC.Board.useState({ blockOf: blockOf });
     var units = stage.units.map(function (placement, index) {
+      var at = SC.Board.canonical({ blockOf: blockOf }, placement.x, placement.y);   // 建物の中なら、建物の左上のマス
       return {
         id: 'u' + index,
         type: placement.type,
         side: placement.side,
-        x: placement.x,
-        y: placement.y,
+        x: at.x,
+        y: at.y,
         hp: SC.Combat.getMaxHp(placement.type),   // 部隊の体力の合計（兵士1人あたりの体力 × 人数）
         role: placement.role || null,   // CPUの役目（'guard'：守備兵。決まったマスから動かず、構えて待つ）
         braced: false,                  // 構え中（次の自分のターンが始まるまで）
@@ -53,6 +56,7 @@
       height: terrain.length,
       terrain: terrain,
       units: units,
+      blockOf: blockOf,
       turn: 1,
       side: 'player',
       winner: null,
@@ -160,6 +164,8 @@
     var events = [];
     moveUnit(unit, destination, events);
     ally.hp = forecast.hpAfter;
+    var prayerData = SC.UNIT_TYPES[unit.type].prayer;
+    if (prayerData.defenseBuff) ally.blessing = prayerData.defenseBuff;   // ハイプリースト：次の自分の番が始まるまで守り+1
     events.push({
       type: 'pray',
       unitId: unit.id,
@@ -167,7 +173,8 @@
       restored: forecast.restored,
       soldiersBefore: forecast.soldiersBefore,
       soldiersAfter: forecast.soldiersAfter,
-      targetHp: ally.hp
+      targetHp: ally.hp,
+      blessing: prayerData.defenseBuff || 0
     });
     events = events.concat(SC.Regulars.gainFromPrayer(state, unit, forecast.restored));   // 回復役の正規部隊は祈りで育つ
     unit.acted = true;
@@ -189,11 +196,11 @@
     return { ok: true, events: events };
   }
 
-  // 召喚できるマス：魔法使いの上下左右の、空いていて、呼ぶ部隊が立てるマス
+  // 召喚できるマス：魔法使いの上下左右（建物の中なら建物のまわり）の、空いていて、呼ぶ部隊が立てるマス。2×2の建物の中には呼べない
   function getSummonTiles(state, unit, typeId) {
     var moveType = SC.UNIT_TYPES[typeId].moveType;
-    return [[1, 0], [-1, 0], [0, 1], [0, -1]].map(function (d) { return { x: unit.x + d[0], y: unit.y + d[1] }; }).filter(function (tile) {
-      return SC.Board.inBounds(state, tile.x, tile.y) && !SC.Board.getUnitAt(state, tile.x, tile.y) &&
+    return SC.Board.neighbors(state, unit.x, unit.y).filter(function (tile) {
+      return !SC.Board.getBlock(state, tile.x, tile.y) && !SC.Board.getUnitAt(state, tile.x, tile.y) &&
         SC.Movement.getMoveCost(state.terrain[tile.y][tile.x], moveType) !== null;
     });
   }
@@ -272,6 +279,9 @@
 
   // CPUや自動対戦の行動（{ unitId, x, y, targetId, kind }）を実行する。kind が 'pray' なら祈り、'brace' なら構え、それ以外は攻撃か待機
   function perform(state, action) {
+    SC.Board.useState(state);
+    var anchor = SC.Board.canonical(state, action.x, action.y);   // 建物のどのマスを選んでも、建物の左上のマス
+    action = Object.assign({}, action, { x: anchor.x, y: anchor.y });
     var destination = { x: action.x, y: action.y };
     if (action.kind === 'brace') return brace(state, action.unitId);
     if (action.kind === 'hire') return SC.Economy.hire(state, action.unitId, action.unitType, { x: action.x, y: action.y });
@@ -289,6 +299,8 @@
     for (var ty = 0; ty < state.height; ty++) {
       for (var tx = 0; tx < state.width; tx++) {
         if (SC.Board.getUnitAt(state, tx, ty)) continue;
+        var spot = SC.Board.canonical(state, tx, ty);
+        if (spot.x !== tx || spot.y !== ty) continue;   // 建物は左上のマスだけ
         if (SC.Movement.getMoveCost(state.terrain[ty][tx], moveTypeId) === null) continue;
         var d = Math.abs(tx - x) + Math.abs(ty - y);
         if (!best || d < best.d) best = { x: tx, y: ty, d: d };
@@ -334,6 +346,7 @@
     if (!terrain.hazardPercent) return 0;
     var moveType = SC.MOVE_TYPES[SC.UNIT_TYPES[unit.type].moveType] || {};
     if (moveType.ignoresHazard) return 0;
+    if ((terrain.hazardSpares || []).indexOf(SC.UNIT_TYPES[unit.type].family) >= 0) return 0;   // 墓地の瘴気は、不死には効かない
     return Math.ceil(SC.Combat.getMaxHp(unit.type) * terrain.hazardPercent / 100);
   }
 
@@ -363,6 +376,7 @@
       unit.moved = false;
       unit.justHired = false;
       if (unit.side === state.side) unit.braced = false;   // 自分のターンが始まったら、構えは解ける
+      if (unit.side === state.side) unit.blessing = 0;     // ハイプリーストの守り+1も、自分の番が始まったら解ける
     });
     state.turnEvents = addReinforcements(state, state.side).concat(applyHazards(state, state.side), SC.Economy.startTurn(state, state.side));   // 増援、沼・藪のダメージ、収入と補充
   }

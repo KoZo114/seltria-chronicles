@@ -10,14 +10,20 @@
   // 拠点（城と町）の持ち主の表を作る。城は、最初にそこに立っている王の軍のもの。町はステージのデータで決める（書かれていなければ中立）
   function createOwners(stage, terrain) {
     var owners = {};
+    var blocks = { blockOf: SC.Board.findBlocks(terrain) };   // 2×2の建物は、左上のマスだけで持ち主を持つ
     terrain.forEach(function (row, y) {
       row.forEach(function (terrainId, x) {
-        if (terrainId !== 'castle' && terrainId !== 'town' && terrainId !== 'fort') return;
-        var king = stage.units.filter(function (u) { return SC.UNIT_TYPES[u.type].isKing && u.x === x && u.y === y; })[0];
+        if (!isBase(terrainId)) return;
+        var anchor = SC.Board.canonical(blocks, x, y);
+        if (anchor.x !== x || anchor.y !== y) return;
+        var king = stage.units.filter(function (u) {
+          var at = SC.Board.canonical(blocks, u.x, u.y);
+          return SC.UNIT_TYPES[u.type].isKing && at.x === x && at.y === y;
+        })[0];
         owners[key(x, y)] = king ? king.side : null;
       });
     });
-    (stage.towns || []).forEach(function (town) { owners[key(town.x, town.y)] = town.owner || null; });
+    (stage.towns || []).forEach(function (town) { var at = SC.Board.canonical(blocks, town.x, town.y); owners[key(at.x, at.y)] = town.owner || null; });
     return owners;
   }
 
@@ -27,10 +33,10 @@
   }
 
   // 拠点（持ち主のある地形）か
-  function isBase(terrainId) { return terrainId === 'castle' || terrainId === 'town' || terrainId === 'fort'; }
+  function isBase(terrainId) { var kind = SC.terrainKind(terrainId); return kind === 'castle' || kind === 'town' || kind === 'fort'; }
 
   // 王がいれば雇える拠点か（城と砦）
-  function isHireBase(terrainId) { return terrainId === 'castle' || terrainId === 'fort'; }
+  function isHireBase(terrainId) { var kind = SC.terrainKind(terrainId); return kind === 'castle' || kind === 'fort'; }
 
   // そのマスが、その軍の城か町か砦か
   function isOwnBase(state, side, x, y) {
@@ -46,7 +52,7 @@
     Object.keys(state.owners).forEach(function (k) {
       if (state.owners[k] !== side) return;
       var parts = k.split(',');
-      var terrainId = state.terrain[Number(parts[1])][Number(parts[0])];
+      var terrainId = SC.terrainKind(state.terrain[Number(parts[1])][Number(parts[0])]);
       income += terrainId === 'castle' ? SC.ECONOMY.castleIncome : terrainId === 'fort' ? SC.ECONOMY.fortIncome : SC.ECONOMY.townIncome;
     });
     // 収入の割合を軍ごとに変えるステージ（stages.js の rules.incomeScale。例：{ enemy: 0.5 } なら敵の収入は半分。10G単位に切り捨て）
@@ -58,6 +64,7 @@
   // その部隊が、その地形を占領できるか。町は歩兵だけ、砦は歩兵と王（2026-10-18 ユーザー決定）
   function canCapture(unit, terrainId) {
     var type = SC.UNIT_TYPES[unit.type];
+    terrainId = SC.terrainKind(terrainId);
     if (terrainId === 'town') return !!type.capturesTowns;
     if (terrainId === 'fort') return !!type.capturesTowns || !!type.isKing;
     return false;
@@ -185,6 +192,7 @@
   SC.Economy = {
     canCapture: canCapture,
     isBase: isBase,
+    isHireBase: isHireBase,
     getHireTypes: getHireTypes,
     getRelocateTiles: getRelocateTiles,
     relocateHire: relocateHire,

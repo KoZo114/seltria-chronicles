@@ -41,6 +41,8 @@
     Object.keys(regularArt).forEach(function (id) {
       Object.keys(regularArt[id]).forEach(function (typeId) { paths.push(regularArt[id][typeId].map, regularArt[id][typeId].battle); });
     });
+    var big = assets.bigBuildings || {};   // 大きく見せる建物
+    Object.keys(big).forEach(function (id) { paths.push(big[id]); });
     var portraits = assets.portraits || {};   // 隊長の顔の絵
     Object.keys(portraits).forEach(function (id) { paths.push(portraits[id]); });
     var capture = assets.capture || {};   // 町を占領した場面
@@ -103,6 +105,24 @@
       '<path d="M6 40 C10 26 18 30 22 18 C26 30 34 24 42 40 Z" fill="#5c7a2e" stroke="#33461a" stroke-width="1.5" stroke-linejoin="round"/>' +
       '<path d="M12 34 l-3 -3 M20 26 l-3 -4 M28 28 l3 -4 M36 34 l3 -3" stroke="#e9e2c0" stroke-width="1.6" stroke-linecap="round"/>' +
       '</svg>',
+    // 城壁（2×2の城の左右に置く、通れないマス）：絵が届くまでの仮の絵
+    wall:
+      '<svg viewBox="0 0 48 48" aria-hidden="true">' +
+      '<path d="M2 46 V14 H10 V8 H18 V14 H30 V8 H38 V14 H46 V46 Z" fill="#9b968a" stroke="#4f4a3c" stroke-width="1.5" stroke-linejoin="round"/>' +
+      '<path d="M2 26 H46 M2 36 H46 M14 26 V36 M30 26 V36 M22 36 V46 M38 36 V46 M8 14 V26 M24 14 V26 M40 14 V26" stroke="#6f6a5c" stroke-width="1.2"/>' +
+      '</svg>',
+    // 墓地と大聖堂：絵が届くまでの仮の絵
+    graveyard:
+      '<svg viewBox="0 0 48 48" aria-hidden="true">' +
+      '<path d="M8 38 V22 a6 6 0 0 1 12 0 V38 Z M28 40 V26 a5 5 0 0 1 10 0 V40 Z" fill="#9aa0a8" stroke="#4a4f57" stroke-width="1.5"/>' +
+      '<path d="M14 12 V20 M10 15 H18 M33 14 V22 M29 17 H37" stroke="#6b6f78" stroke-width="2" stroke-linecap="round"/>' +
+      '</svg>',
+    cathedral:
+      '<svg viewBox="0 0 48 48" aria-hidden="true">' +
+      '<path d="M8 44 V22 L24 8 L40 22 V44 Z" fill="#d6d1e0" stroke="#5a5568" stroke-width="1.5" stroke-linejoin="round"/>' +
+      '<circle cx="24" cy="24" r="5" fill="#6f8fd8" stroke="#5a5568" stroke-width="1.2"/>' +
+      '<path d="M19 44 V36 a5 5 0 0 1 10 0 V44 Z" fill="#5a5568"/>' +
+      '</svg>',
     castle:
       '<svg viewBox="0 0 48 48" aria-hidden="true">' +
       '<path d="M5 44 V12 H11 V17 H16 V12 H22 V17 H26 V12 H32 V17 H37 V12 H43 V44 Z" fill="#8d8674" stroke="#4f4a3c" stroke-width="1.5" stroke-linejoin="round"/>' +
@@ -135,11 +155,19 @@
     elements.wrap.addEventListener('scroll', updateShades, { passive: true });
   }
 
+  // 2×2の建物（城・大聖堂）の中にいる部隊は、建物の真ん中に描く（ルールの上の位置は、建物の左上のマス）
+  var boardBlocks = null;
+  function displayPos(x, y) {
+    var block = boardBlocks && boardBlocks[x + ',' + y];
+    return block ? { x: block.x + 0.5, y: block.y + 0.5 } : { x: x, y: y };
+  }
+
   function setPosition(element, x, y) {
-    element.style.setProperty('--ux', x);
-    element.style.setProperty('--uy', y);
-    element.dataset.x = x;
-    element.dataset.y = y;
+    var shown = displayPos(x, y);
+    element.style.setProperty('--ux', shown.x);
+    element.style.setProperty('--uy', shown.y);
+    element.dataset.x = shown.x;
+    element.dataset.y = shown.y;
   }
 
   function buildBoard(state, onTileTap) {
@@ -147,6 +175,10 @@
     elements.tiles.innerHTML = '';
     elements.units.innerHTML = '';
     elements.effects.innerHTML = '';
+    var decor = document.getElementById('decor');
+    if (decor) decor.innerHTML = '';
+    var bigBuildings = getAssets().bigBuildings || {};
+    boardBlocks = state.blockOf && Object.keys(state.blockOf).length ? state.blockOf : null;
     unitElements = {};
     tileElements = [];
     elements.tiles.style.gridTemplateColumns = 'repeat(' + state.width + ', var(--tile))';
@@ -159,14 +191,31 @@
         tile.dataset.x = x;
         tile.dataset.y = y;
         tile.setAttribute('aria-label', SC.TERRAIN[terrainId].name);
-        var imagePath = getTerrainImagePath(terrainId, x, y);
+        // 2×2の建物（城・大聖堂）：4マスとも草原の絵にして、建物の大きな絵を4マスぴったりに重ねる（絵が無ければ、今までどおり1マスずつの絵）
+        var block = boardBlocks && boardBlocks[x + ',' + y];
+        // 持ち主のいる建物は「地形_軍」の絵があればそれ（敵の城は赤い屋根）
+        var owner = block && state.owners ? state.owners[block.x + ',' + block.y] : null;
+        var bigKey = owner && bigBuildings[terrainId + '_' + owner] && loadedImages[bigBuildings[terrainId + '_' + owner]] ? terrainId + '_' + owner : terrainId;
+        var bigPath = block && bigBuildings[bigKey] && loadedImages[bigBuildings[bigKey]] ? bigBuildings[bigKey] : null;
+        var imagePath = bigPath ? getTerrainImagePath('plain', x, y) : getTerrainImagePath(terrainId, x, y);
+        if (bigPath && decor && block.x === x && block.y === y) {
+          var big = document.createElement('img');
+          big.className = 'big-building';
+          big.src = bigPath;
+          big.alt = '';
+          big.style.setProperty('--bx', x);
+          big.style.setProperty('--by', y);
+          decor.appendChild(big);
+        }
+        if (block) tile.classList.add('in-block', 'bk-' + (y === block.y ? 't' : 'b') + (x === block.x ? 'l' : 'r'));   // 建物の4マスのどこか（線を消し、枠を建物の外側だけに描くため）
         if (imagePath) {
           tile.classList.add('has-image');
           tile.style.backgroundImage = 'url("' + imagePath + '")';
         } else {
           tile.innerHTML = TERRAIN_ART[terrainId] || '';
         }
-        if (terrainId === 'town' || terrainId === 'fort') tile.insertAdjacentHTML('beforeend', '<span class="owner-flag"></span>');   // 町と砦の持ち主の旗
+        if (SC.TERRAIN[terrainId].hazardPercent) tile.insertAdjacentHTML('beforeend', '<span class="hazard-mark" aria-hidden="true"></span>');   // 止まると体力が減る地形（沼・藪・墓地）の印
+        if (SC.terrainKind(terrainId) === 'town' || SC.terrainKind(terrainId) === 'fort') tile.insertAdjacentHTML('beforeend', '<span class="owner-flag"></span>');   // 町と砦の持ち主の旗
         elements.tiles.appendChild(tile);
         tileElements.push(tile);
       }
@@ -333,7 +382,7 @@
       ? '<div class="unit-plate"></div><img class="sprite" src="' + imagePath + '" alt="" draggable="false">'
       : createUnitSvg(unit.type, unit.side);
     element.innerHTML = '<div class="unit-body">' + body + '</div>' +
-      '<div class="done-mark">済</div><div class="brace-mark" title="構え中"></div><div class="pips"></div><div class="hp"></div>' +
+      '<div class="done-mark">済</div><div class="brace-mark" title="構え中"></div><div class="bless-mark" title="守り+1（ハイプリーストの祈り）"></div><div class="pips"></div><div class="hp"></div>' +
       (SC.UNIT_TYPES[unit.type].diagonalFront ? '<div class="facing-mark"></div>' : '') +   // 騎士の向き（金の矢印）
       (unit.regularId ? '<div class="regular-mark" title="正規部隊"></div><div class="exp-bar"><i></i></div>' : '');   // 正規部隊の印と経験値
     elements.units.appendChild(element);
@@ -383,6 +432,7 @@
       setHp(element, unit.type, unit.hp, (view.soldiersAfter || {})[unit.id]);
       element.classList.toggle('acted', unit.acted);
       element.classList.toggle('braced', !!unit.braced);
+      element.classList.toggle('blessed-guard', !!unit.blessing);   // ハイプリーストの祈りで守り+1
       if (unit.regularId) {
         var threshold = SC.Regulars.getThreshold(unit.regularId, unit.type);
         var bar = element.querySelector('.exp-bar i');
@@ -408,7 +458,8 @@
 
   function drawHighlights(view) {
     tileElements.forEach(function (tile) {
-      var key = tile.dataset.x + ',' + tile.dataset.y;
+      var block = boardBlocks && boardBlocks[tile.dataset.x + ',' + tile.dataset.y];
+      var key = block ? block.x + ',' + block.y : tile.dataset.x + ',' + tile.dataset.y;   // 2×2の建物は、4マスとも同じ色にする
       tile.classList.toggle('move', !!(view.moveTiles && view.moveTiles[key]));
       tile.classList.toggle('range', !!(view.rangeTiles && view.rangeTiles[key]));
       tile.classList.toggle('target', !!(view.targetTiles && view.targetTiles[key]));
@@ -482,7 +533,8 @@
   function animateMove(unitId, to) {
     var element = unitElements[unitId];
     if (!element) return Promise.resolve();
-    if (Number(element.dataset.x) === to.x && Number(element.dataset.y) === to.y) return Promise.resolve();
+    var shown = displayPos(to.x, to.y);
+    if (Number(element.dataset.x) === shown.x && Number(element.dataset.y) === shown.y) return Promise.resolve();
     setPosition(element, to.x, to.y);
     return sleep(300);
   }

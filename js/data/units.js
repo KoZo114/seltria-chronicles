@@ -90,6 +90,21 @@
       noRestore: true,
       description: '召喚で現れる岩の巨人。とても硬いが足が遅い。魔法に弱い。補充や祈りでは戻らない。'
     },
+    // ハイプリースト（ステージ17から。プリーストの上。正規部隊だけ）：動かずに祈ると6人隊を全員戻し、3人隊には2人。祈った味方の守り+1（2026-10-20 合意）
+    // stillAll：動かずに祈ると全員戻す。defenseBuff：祈った味方の防御に足す値（次の自分の番が始まるまで）
+    highPriest: {
+      name: 'ハイプリースト', size: 6, soldierHp: 6, attack: 2, defense: 1, move: 3,
+      rangeMin: 1, rangeMax: 1, moveType: 'ground', isKing: false, family: 'healer',
+      prayer: { stillAll: true, stillDivisor: 1, movedDivisor: 2, targetSizes: [6, 3], heavyAmount: 2, defenseBuff: 1 },
+      description: 'プリーストの上。動かずに祈ると6人隊を全員戻し、3人隊には2人戻す。祈った味方の守りを1上げる。'
+    },
+    // サーガ（ステージ17から。ウィザードの上。正規部隊だけ）：強さはウィザードと同じ。召喚が必ず成功して、全員そろう
+    saga: {
+      name: 'サーガ', size: 6, soldierHp: 5, attack: 4, defense: 0, move: 3,
+      rangeMin: 1, rangeMax: 2, moveType: 'ground', isKing: false, family: 'magic',
+      summon: { types: ['skeleton', 'golem'], maxSoldiers: 6, chancePercent: 100, byType: { golem: { maxSoldiers: 3, chancePercent: 100 } } },
+      description: 'ウィザードの上。召喚が必ず成功し、スケルトン6人・ゴーレム3人がそろう。'
+    },
     // ドラゴン（ステージ16から。まずは敵の強敵）：地上の竜で最強。地形無視（湖・沼・藪もふつうに進み、沼・藪のダメージも受けない）。
     // allDirections：隣の8マス（斜めも）に攻撃・反撃が届く。向きは無い。大型なので魔法に弱く、ドラゴンナイトはさらに+3
     dragon: {

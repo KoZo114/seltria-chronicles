@@ -60,8 +60,39 @@
       kingDamageReductionPercent: 0,
       description: '移動コスト2。受ける打撃が1減るが、ターンの始めにここにいると、最大体力の1割のダメージ（空を飛ぶ部隊は受けない）。'
     },
+    // 墓地（ステージ17から）：死者の瘴気で、ターンの始めにここにいると最大体力の1割のダメージ。受ける打撃は1減る。
+    // 不死（スケルトン）はダメージを受けない（hazardSpares）
+    graveyard: {
+      name: '墓地',
+      moveCost: 2,
+      defense: 1,
+      hazardPercent: 10,
+      hazardSpares: ['undead'],
+      kingDamageReductionPercent: 0,
+      description: '移動コスト2。受ける打撃が1減るが、ターンの始めにここにいると、最大体力の1割のダメージ（空を飛ぶ部隊と不死は受けない）。'
+    },
+    // 大聖堂の跡（ステージ17から）：しくみは砦と同じ（baseKind）。絵と名前だけ違う
+    cathedral: {
+      name: '大聖堂',
+      baseKind: 'fort',
+      bigBlock: true,   // マップで2×2に並べると、4マスで建物1つ（js/rules/movement.js）
+      moveCost: 1,
+      defense: 2,
+      kingDamageReductionPercent: 0,
+      description: '移動コスト1。受ける打撃が2減ります。歩兵か王が占領でき、毎ターン20G。王がいれば雇えます（砦と同じ）。'
+    },
+    // 城壁（2026-10-20）：2×2の城の左右の奥に置く。歩いては通れない（空を飛ぶ部隊は入れる）。城を囲める数を、1マスの城と同じ最大4部隊にするため
+    wall: {
+      name: '城壁',
+      moveCost: 1,
+      impassable: true,
+      defense: 0,
+      kingDamageReductionPercent: 0,
+      description: '通れません（空を飛ぶ部隊は入れます）。'
+    },
     castle: {
       name: '城',
+      bigBlock: true,   // マップで2×2に並べると、4マスで城1つ
       moveCost: 1,
       defense: 0,
       kingDamageReductionPercent: 30,
@@ -77,6 +108,9 @@
   //  ignoresHazard：沼や藪のダメージを受けない
   // 「地形の影響を無視」と「通れない地形に入れる」は別の設定にしている（追加仕様の決まり）
   // 2026-10-14 決定：飛ぶ部隊は湖の上に止まれる。飛ぶ部隊とドラゴン（地形無視）は地形の守りを受けない。
+  // 地形のしくみの種類（大聖堂は砦と同じしくみ）。占領・収入・雇う場所などは、この種類で決める
+  SC.terrainKind = function (terrainId) { return (SC.TERRAIN[terrainId] && SC.TERRAIN[terrainId].baseKind) || terrainId; };
+
   SC.MOVE_TYPES = {
     ground: { name: '歩き' },
     woodland: { name: '歩き（森が得意）', costOverrides: { forest: 1 } },
