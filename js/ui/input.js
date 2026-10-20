@@ -740,7 +740,8 @@
     SC.Render.sleep(450).then(function () {
       if (mySession !== session) return;
       var best = options.save.stages[stage.id];
-      var nextStage = SC.STAGES[stage.id + 1] || null;
+      var nextId = won ? SC.Save.getNextStage(options.save, stage.id, Object.keys(SC.STAGES).map(Number)) : null;   // 勝ったあとは、記録してから次を決める
+      var nextStage = nextId ? SC.STAGES[nextId] : null;
       var newRecord = won && (!previousBest || turns < previousBest);
       SC.Screens.showModal({
         kind: won ? 'victory' : 'defeat',

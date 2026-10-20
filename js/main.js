@@ -156,7 +156,7 @@
     var cleared = !!(record && record.cleared);
     var name = stage.title.split('　').slice(1).join('　') || stage.title;
     var status;
-    if (!unlocked) status = '<span class="stage-status locked">' + LOCK_SVG + '前の戦場で勝利すると解放</span>';
+    if (!unlocked) status = '<span class="stage-status locked">' + LOCK_SVG + SC.Save.getUnlockHint(stageId) + '</span>';
     else if (cleared) status = '<span class="stage-status cleared">制覇' + (record.bestTurns ? '<i>最短 ' + record.bestTurns + ' ターン</i>' : '') + '</span>';
     else status = '<span class="stage-status new">未踏の戦場</span>';
     var card = document.createElement('button');

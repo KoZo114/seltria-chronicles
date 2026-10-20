@@ -91,10 +91,47 @@
   }
 
   // 遊べるステージか。ステージ1はいつでも、それ以降は一つ前のステージをクリアすると遊べる
+  // 遊べるステージ（2026-10-21 ユーザーの希望）：
+  //  ・はじめから遊べるのは 1・2・3・11
+  //  ・ステージ1〜10は5つずつ。はじめの3つは好きな順で遊べ、3つともクリアすると4つ目、4つ目をクリアすると5つ目
+  //    （6・7・8は、ステージ5をクリアすると遊べる）
+  //  ・ステージ11からは、1つ前をクリアすると遊べる（ステージ1〜10をクリアしていなくても、11から遊べる）
+  var FREE_STAGES = [1, 2, 3, 11];
+  var FREE_BLOCK_END = 10;   // 5つずつの区切りで遊ぶのは、ステージ10まで
+
+  function isCleared(save, stageId) { var record = save.stages[stageId]; return !!(record && record.cleared); }
+
   function isStageUnlocked(save, stageId) {
-    if (stageId <= 1) return true;
-    var previous = save.stages[stageId - 1];
-    return !!(previous && previous.cleared);
+    if (FREE_STAGES.indexOf(stageId) >= 0) return true;
+    if (stageId > FREE_BLOCK_END) return isCleared(save, stageId - 1);
+    var first = stageId - ((stageId - 1) % 5);   // その区切りの1つ目（1 か 6）
+    var offset = stageId - first;
+    if (offset <= 2) return isCleared(save, first - 1);   // 6・7・8：ステージ5をクリアすると
+    if (offset === 3) return isCleared(save, first) && isCleared(save, first + 1) && isCleared(save, first + 2);
+    return isCleared(save, first + 3);
+  }
+
+  // まだ遊べないステージの、解放のしかた（ステージを選ぶ画面に出す）
+  function getUnlockHint(stageId) {
+    if (stageId > FREE_BLOCK_END) return '前の戦場で勝利すると解放';
+    var first = stageId - ((stageId - 1) % 5);
+    var offset = stageId - first;
+    if (offset <= 2) return 'ステージ' + (first - 1) + 'で勝利すると解放';
+    if (offset === 3) return 'ステージ' + first + '〜' + (first + 2) + 'を全て制覇で解放';
+    return 'ステージ' + (first + 3) + 'で勝利すると解放';
+  }
+
+  // 勝ったあとの「次のステージへ」で進むステージ（無ければ null）。
+  // ステージ1〜10は、同じ区切りの中で、遊べてまだクリアしていないステージを先に（1→2→3→4→5）。無ければ次の番号
+  function getNextStage(save, stageId, stageIds) {
+    if (stageId <= FREE_BLOCK_END) {
+      var first = stageId - ((stageId - 1) % 5);
+      for (var id = first; id < first + 5; id++) {
+        if (id !== stageId && stageIds.indexOf(id) >= 0 && isStageUnlocked(save, id) && !isCleared(save, id)) return id;
+      }
+    }
+    var next = stageId + 1;
+    return stageIds.indexOf(next) >= 0 && isStageUnlocked(save, next) ? next : null;
   }
 
   // ---- 途中保存（遊びかけの戦い） ----
@@ -125,7 +162,7 @@
   }
 
   SC.Save = {
-    SAVE_KEY: SAVE_KEY, createEmptySave: createEmptySave, load: load, store: store, recordClear: recordClear, isStageUnlocked: isStageUnlocked,
+    SAVE_KEY: SAVE_KEY, createEmptySave: createEmptySave, load: load, store: store, recordClear: recordClear, isStageUnlocked: isStageUnlocked, getUnlockHint: getUnlockHint, getNextStage: getNextStage,
     canEarnExperience: canEarnExperience, markExperienceEarned: markExperienceEarned,
     saveBattle: saveBattle, clearBattle: clearBattle, restoreBattle: restoreBattle
   };
