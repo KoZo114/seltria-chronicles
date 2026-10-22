@@ -45,6 +45,8 @@
     Object.keys(big).forEach(function (id) { paths.push(big[id]); });
     var portraits = assets.portraits || {};   // 隊長の顔の絵
     Object.keys(portraits).forEach(function (id) { paths.push(portraits[id]); });
+    var speakers = SC.TALK_SPEAKERS || {};   // 会話で話す敵の顔の絵
+    Object.keys(speakers).forEach(function (id) { if (speakers[id].portrait) paths.push(speakers[id].portrait); });
     var capture = assets.capture || {};   // 町を占領した場面
     ['before', 'after', 'flag'].forEach(function (id) { if (capture[id]) paths.push(capture[id]); });
     return Promise.all(paths.map(function (path) {
@@ -63,6 +65,19 @@
   function getTerrainImage(terrainId, x, y) {
     var path = getTerrainImagePath(terrainId, x, y);
     return path ? loadedImages[path] : null;
+  }
+
+  // 2×2の建物の大きな絵（全体の図で使う）。(x, y) が建物のマスでなければ、または絵が無ければ null。
+  // block は建物の左上のマス。持ち主のいる建物は「地形_軍」の絵があればそれ
+  function getBigBuilding(state, x, y) {
+    var block = state.blockOf && state.blockOf[x + ',' + y];
+    if (!block) return null;
+    var bigBuildings = getAssets().bigBuildings || {};
+    var terrainId = state.terrain[y][x];
+    var owner = state.owners ? state.owners[block.x + ',' + block.y] : null;
+    var path = owner && loadedImages[bigBuildings[terrainId + '_' + owner]] ? bigBuildings[terrainId + '_' + owner] : bigBuildings[terrainId];
+    var image = path && loadedImages[path];
+    return image ? { block: block, image: image } : null;
   }
 
   function getTerrainImagePath(terrainId, x, y) {
@@ -104,6 +119,19 @@
       '<svg viewBox="0 0 48 48" aria-hidden="true">' +
       '<path d="M6 40 C10 26 18 30 22 18 C26 30 34 24 42 40 Z" fill="#5c7a2e" stroke="#33461a" stroke-width="1.5" stroke-linejoin="round"/>' +
       '<path d="M12 34 l-3 -3 M20 26 l-3 -4 M28 28 l3 -4 M36 34 l3 -3" stroke="#e9e2c0" stroke-width="1.6" stroke-linecap="round"/>' +
+      '</svg>',
+    // 城門と壊れた城門：絵が届くまでの仮の絵
+    gate:
+      '<svg viewBox="0 0 48 48" aria-hidden="true">' +
+      '<path d="M2 46 V10 H46 V46 Z" fill="#9b968a" stroke="#4f4a3c" stroke-width="1.5"/>' +
+      '<path d="M12 46 V24 a12 12 0 0 1 24 0 V46 Z" fill="#7a4b26" stroke="#3a2412" stroke-width="1.5"/>' +
+      '<path d="M18 46 V22 M24 46 V18 M30 46 V22 M12 32 H36" stroke="#3a2412" stroke-width="1.4"/>' +
+      '</svg>',
+    gateBroken:
+      '<svg viewBox="0 0 48 48" aria-hidden="true">' +
+      '<path d="M2 46 V10 H46 V46 Z" fill="#9b968a" stroke="#4f4a3c" stroke-width="1.5"/>' +
+      '<path d="M12 46 V24 a12 12 0 0 1 24 0 V46 Z" fill="#a9cf86" stroke="#4f4a3c" stroke-width="1.5"/>' +
+      '<path d="M14 44 l6 -4 M28 40 l6 5 M20 30 l3 3" stroke="#7a4b26" stroke-width="2.4" stroke-linecap="round"/>' +
       '</svg>',
     // 城壁（2×2の城の左右に置く、通れないマス）：絵が届くまでの仮の絵
     wall:
@@ -214,6 +242,7 @@
         } else {
           tile.innerHTML = TERRAIN_ART[terrainId] || '';
         }
+        if (terrainId === 'gate') tile.insertAdjacentHTML('beforeend', '<span class="gate-hp"><i></i></span>');   // 城門の体力のゲージ
         if (SC.TERRAIN[terrainId].hazardPercent) tile.insertAdjacentHTML('beforeend', '<span class="hazard-mark" aria-hidden="true"></span>');   // 止まると体力が減る地形（沼・藪・墓地）の印
         if (SC.terrainKind(terrainId) === 'town' || SC.terrainKind(terrainId) === 'fort') tile.insertAdjacentHTML('beforeend', '<span class="owner-flag"></span>');   // 町と砦の持ち主の旗
         elements.tiles.appendChild(tile);
@@ -384,7 +413,8 @@
     element.innerHTML = '<div class="unit-body">' + body + '</div>' +
       '<div class="done-mark">済</div><div class="brace-mark" title="構え中"></div><div class="bless-mark" title="守り+1（ハイプリーストの祈り）"></div><div class="pips"></div><div class="hp"></div>' +
       (SC.UNIT_TYPES[unit.type].diagonalFront ? '<div class="facing-mark"></div>' : '') +   // 騎士の向き（金の矢印）
-      (unit.regularId ? '<div class="regular-mark" title="正規部隊"></div><div class="exp-bar"><i></i></div>' : '');   // 正規部隊の印と経験値
+      (unit.regularId ? '<div class="regular-mark" title="正規部隊"></div><div class="exp-bar"><i></i></div>' : '') +   // 正規部隊の印と経験値
+      (unit.commander ? '<div class="commander-mark" title="指揮官"></div>' : '');   // 指揮官の旗（ステージ19から）
     elements.units.appendChild(element);
     unitElements[unit.id] = element;
     return element;
@@ -418,6 +448,7 @@
   function syncUnits(state, view) {
     view = view || {};
     syncOwners(state);
+    syncGates(state);
     var alive = {};
     state.units.forEach(function (unit) {
       alive[unit.id] = true;
@@ -479,7 +510,7 @@
     if (old) old.remove();
     if (!choice) return;
     var layer = document.createElement('div');
-    layer.className = 'facing-choice';
+    layer.className = 'facing-choice' + (choice.assist ? ' assist' : '');   // 案内のときは、矢印を大きく光らせる
     Object.keys(FACING_STEPS).forEach(function (facing) {
       var x = choice.x + FACING_STEPS[facing][0], y = choice.y + FACING_STEPS[facing][1];
       if (x < 0 || y < 0 || x >= boardSize.width || y >= boardSize.height) return;
@@ -527,6 +558,39 @@
     unitIds.forEach(function (unitId) {
       var element = unitElements[unitId];
       if (element) restartAnimation(element, 'appear', 500);
+    });
+  }
+
+  // 城門の体力のゲージと、壊れた城門の絵を、今の盤面に合わせる
+  function syncGates(state) {
+    tileElements.forEach(function (tile) {
+      var x = Number(tile.dataset.x), y = Number(tile.dataset.y);
+      var terrainId = state.terrain[y][x];
+      if (!tile.classList.contains('t-' + terrainId)) {
+        // 地形が変わった（城門が壊れた）：マスの絵を入れかえる
+        tile.className = tile.className.replace(/\bt-[a-zA-Z]+\b/, 't-' + terrainId);
+        var gauge = tile.querySelector('.gate-hp');
+        if (gauge) gauge.remove();
+        var imagePath = getTerrainImagePath(terrainId, x, y);
+        if (imagePath) { tile.classList.add('has-image'); tile.style.backgroundImage = 'url("' + imagePath + '")'; tile.innerHTML = ''; }
+        else { tile.classList.remove('has-image'); tile.style.backgroundImage = ''; tile.innerHTML = TERRAIN_ART[terrainId] || ''; }
+        tile.setAttribute('aria-label', SC.TERRAIN[terrainId].name);
+      }
+      var bar = tile.querySelector('.gate-hp i');
+      var hp = state.gates && state.gates[x + ',' + y];
+      if (bar && hp !== undefined) bar.style.width = Math.max(0, Math.round(hp / (state.gateHp || SC.GATE.hp) * 100)) + '%';
+    });
+  }
+
+  function animateGate(state, event) {
+    var tile = tileElements.filter(function (t) { return Number(t.dataset.x) === event.x && Number(t.dataset.y) === event.y; })[0];
+    SC.Sound.play(event.broken ? 'crit' : 'hit');
+    if (tile) restartAnimation(tile, 'gate-shake', 360);
+    popupAt(event.x, event.y, '<small>城門</small><span>−' + event.damage + '</span>', event.broken ? 'crit' : 'enemy');
+    return sleep(420).then(function () {
+      syncGates(state);
+      if (event.broken) popupAt(event.x, event.y, '<span>城門が壊れた！</span>', 'gold');
+      return sleep(event.broken ? 700 : 250);
     });
   }
 
@@ -698,6 +762,8 @@
   }
 
   SC.Render = {
+    animateGate: animateGate,
+    syncGates: syncGates,
     init: init,
     buildBoard: buildBoard,
     layout: layout,
@@ -706,6 +772,7 @@
     centerOn: centerOn,
     getViewRect: getViewRect,
     getTerrainImage: getTerrainImage,
+    getBigBuilding: getBigBuilding,
     syncUnits: syncUnits,
     drawHighlights: drawHighlights,
     drawFacingChoice: drawFacingChoice,

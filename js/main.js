@@ -283,7 +283,9 @@
     SC.Save.store(save);
     var available = SC.Regulars.getAvailable(save.roster, stageId);
     var limit = Math.min(SC.MAX_DEPLOY, stage.regularSlots.length);
-    var chosen = available.slice(0, limit).map(function (member) { return member.id; });
+    // 必ず出撃する隊長（そのステージで加わり、会話で話す隊長。2026-10-21 ユーザーの希望）。ほかの部隊は選べる
+    var required = (stage.requiredRegulars || []).filter(function (id) { return available.some(function (m) { return m.id === id; }); });
+    var chosen = required.concat(available.map(function (member) { return member.id; }).filter(function (id) { return required.indexOf(id) < 0; })).slice(0, limit);
     var replay = !SC.Save.canEarnExperience(save, stageId);
     byId('prep-lead').innerHTML = stage.title + '<br><small>出撃する正規部隊を選ぶ（' + limit + '部隊まで）' +
       (replay ? '　<em>このステージの経験値は、もうもらいました（遊び直しでは入りません）</em>' : '') + '</small>';
@@ -295,18 +297,20 @@
         var type = SC.UNIT_TYPES[member.type];
         var threshold = SC.Regulars.getThreshold(member.id, member.type);
         var on = chosen.indexOf(member.id) >= 0;
+        var must = required.indexOf(member.id) >= 0;
         var card = document.createElement('button');
         card.type = 'button';
-        card.className = 'prep-card' + (on ? ' on' : '');
+        card.className = 'prep-card' + (on ? ' on' : '') + (must ? ' required' : '');
         var art = SC.Render.getPortraitPath(member.id) || SC.Render.getUnitImagePath(member.type, 'player');   // 隊長の顔（無ければクラスの絵）
         var gauge = threshold ? Math.min(100, Math.round(member.exp / threshold * 100)) : 100;
-        card.innerHTML = '<span class="prep-check">' + (on ? '出撃' : '待機') + '</span>' +
+        card.innerHTML = '<span class="prep-check">' + (must ? '必須' : on ? '出撃' : '待機') + '</span>' +
           '<span class="prep-art">' + (art ? '<img src="' + art + '" alt="">' : '') + '</span>' +
           '<span class="prep-text"><span class="prep-name">' + member.name + '隊<small>' + type.name + '</small></span>' +
           '<span class="prep-exp"><i style="width:' + gauge + '%"></i></span>' +
           '<span class="prep-exp-label">' + (threshold ? '経験 ' + member.exp + '／' + threshold + (SC.Regulars.canRankUp(member.id, member.type, member.exp) ? '　ランクアップできる' : member.exp >= threshold ? '　（次のクラスはまだ）' : '') : '経験 ' + member.exp + '（これ以上ランクアップしない）') + '</span></span>';
         card.onclick = function (event) {
           event.stopPropagation();
+          if (must) return;   // 必ず出撃する隊長は、外せない
           var index = chosen.indexOf(member.id);
           if (index >= 0) chosen.splice(index, 1);
           else if (chosen.length < limit) chosen.push(member.id);
@@ -343,7 +347,7 @@
     document.addEventListener('contextmenu', function (event) { event.preventDefault(); });
     // 画面全体が引っ張られて動くのを止める（窓の中の文章、情報欄、画面より大きいマップだけは指で動かせる）
     document.addEventListener('touchmove', function (event) {
-      if (!event.target.closest('#modal-body, #info-panel, #stage-list, #prep-list, #board-wrap.scrollable')) event.preventDefault();
+      if (!event.target.closest('#modal-body, #info-panel, #stage-list, #prep-list, #hire-list, #board-wrap.scrollable')) event.preventDefault();
     }, { passive: false });
   }
 

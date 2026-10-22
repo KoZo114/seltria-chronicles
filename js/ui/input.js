@@ -18,6 +18,43 @@
   var pendingArrivals = {};   // 増援で現れたが、まだ画面に出していない部隊（番号 → true）
 
   var FACING_NAMES = { up: '上', down: '下', left: '左', right: '右' };
+  var FACING_ASSIST_STAGES = [7, 11];   // 騎士の向きの案内を出すステージ
+  // 増援の組の名前（ステージ19から）
+  var GROUP_NAMES = { north: '北', south: '南', east: '東', west: '西' };
+
+
+  // 祈りと召喚の案内（2026-10-21 ユーザーの希望）：その部隊がはじめて出るステージ（ステージ1〜3は好きな順で遊べるので、2と3はまとめて1回）と、ステージ11。
+  // コマンドのボタンを光らせて説明を出し、相手やマスを選ぶところでも説明を出す。実際に祈る・呼ぶと、見たことにする
+  var ACTION_ASSISTS = {
+    prayer: {
+      keys: { 2: 'prayerAssist_early', 3: 'prayerAssist_early', 11: 'prayerAssist_11' },
+      menu: '僧侶は、隣のけがをした味方（6人隊）に「祈る」と、倒れた兵士を戻せます。光っている「祈る」を押してみよう。動かずに祈ると、多く戻せます。',
+      choose: '戻せる人数を見て、「祈る」で決めよう。相手が何人かいるときは、緑に光る味方から選べます。'
+    },
+    // 歩兵の構え（ステージ4ではじめて出る。ステージ11はアルド隊が歩兵で出るので）
+    brace: {
+      keys: { 4: 'braceAssist_4', 11: 'braceAssist_11' },
+      menu: '歩兵は、動かずにその場で「構え」ができます。構えると、次の自分の番まで、隣から攻めてきた敵より先に突けます（弓兵の攻撃には効きません）。敵が近くにいるときは、光っている「構え」を押してみよう。'
+    },
+    summon: {
+      keys: { 12: 'summonAssist_12' },
+      menu: '魔法使いは、動く前なら「召喚」で、隣のマスにスケルトンを呼べます（1人ずつ半分の確率で、最大3人）。光っている「召喚」を押してみよう。',
+      choose: '緑に光るマスをタップすると、そこにスケルトンを呼べます。呼んだスケルトンは、すぐに動けます。'
+    }
+  };
+
+  function actionAssistKey(kind) {
+    var key = ACTION_ASSISTS[kind].keys[stage.id];
+    return key && !options.save.seenTips[key] ? key : null;
+  }
+
+  function finishActionAssist(kind) {
+    var key = actionAssistKey(kind);
+    if (!key) return;
+    options.save.seenTips[key] = true;
+    SC.Save.store(options.save);
+    SC.Screens.hideToast();
+  }
 
   var TIPS = {
     highPriest: 'ハイプリーストは、動かずに祈ると6人隊の倒れた兵士を全員戻せます。3人隊には2人戻せます。祈った味方は、次の自分の番が始まるまで守りが1上がります（右に白い盾の印）。',
@@ -114,6 +151,25 @@
     });
   }
 
+  function escapeHtml(text) {
+    return String(text).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; });
+  }
+
+  // ステージの始めの説明：お話・新しい決まり（色の違う枠）・勝ち負けの条件を分けて見せる（2026-10-22）
+  function buildBriefingHtml(stage) {
+    var html = '<p class="briefing-story">' + escapeHtml(stage.intro) + '</p>';
+    if (stage.ruleNote) {
+      var lines = stage.ruleNote.split('\n');
+      html += '<div class="briefing-rule"><h3>' + escapeHtml(lines[0]) + '</h3><p>' + escapeHtml(lines.slice(1).join('\n')) + '</p></div>';
+    }
+    html += '<div class="briefing-goal">' + stage.goalText.split('\n').map(function (line) {
+      var parts = line.split('：');
+      var bad = parts[0] === '敗北';
+      return '<div class="' + (bad ? 'lose' : 'win') + '"><b>' + escapeHtml(parts[0]) + '</b><span>' + escapeHtml(parts.slice(1).join('：')) + '</span></div>';
+    }).join('') + '</div>';
+    return html;
+  }
+
   function start(stageId, startOptions) {
     session += 1;
     stage = SC.STAGES[stageId];
@@ -123,13 +179,29 @@
     busy = true;   // 「出陣する」を押すまでは、盤面を押せない
     SC.Screens.showModal({
       title: stage.title,
-      text: stage.intro + '\n\n' + (stage.ruleNote ? stage.ruleNote + '\n\n' : '') + stage.goalText,
+      kind: 'briefing',
+      html: buildBriefingHtml(stage),
       buttons: [
         // 間違えて選んだときは、ステージを選ぶ画面へ戻れる。まだ保存していないので、前の遊びかけも消えない
         { label: 'もどる', onTap: function () { busy = false; exitToTitle(startOptions.onBack); } },
         { label: '出陣する', style: 'primary', onTap: function () {
           busy = false;
           saveProgress();   // 出陣したら、前の遊びかけは消えて、この戦いが保存される
+          // キャラの会話（そのステージをはじめて遊ぶときだけ。2026-10-21）。見たことは、ヒントと同じ記録に残す
+          var talk = (SC.TALKS || {})[stage.id];
+          var talkKey = 'talk_' + stage.id;
+          if (talk && SC.TalkScene && !options.save.seenTips[talkKey]) {
+            options.save.seenTips[talkKey] = true;
+            SC.Save.store(options.save);
+            busy = true;
+            var mySession = session;
+            SC.TalkScene.play(talk, state.deployed).then(function () {
+              if (mySession !== session) return;
+              busy = false;
+              showTurnBanner('ターン 1　自軍の番', 'player');
+            });
+            return;
+          }
           showTurnBanner('ターン 1　自軍の番', 'player');
         } }
       ]
@@ -166,6 +238,15 @@
         selection.pending = position;
         selection.mode = 'forecast';
         selection.targetId = tapped.id;
+        refresh();
+        return;
+      }
+      // 城門（ステージ18から）：届く城門を押すと、城門を攻める見込みを出す。もう一度押すか「攻撃する」で決める
+      var gateHere = !tapped && getGateTargets().filter(function (g) { return g.x === x && g.y === y; })[0];
+      if (gateHere && selection.mode !== 'selected') {
+        if (selection.mode === 'gateForecast' && selection.gateKey === tileKey(x, y)) { if (!isInputLocked()) commitGate(gateHere); return; }
+        selection.mode = 'gateForecast';
+        selection.gateKey = tileKey(x, y);
         refresh();
         return;
       }
@@ -272,8 +353,8 @@
     var current = selectedUnit();
     if (selection.mode === 'moved' && current && current.justHired) { selection.mode = 'relocate'; refresh(); return; }
     if (selection.mode === 'relocate' || selection.mode === 'facing') { selection.mode = 'moved'; refresh(); return; }
-    if (selection.mode === 'forecast' || selection.mode === 'prayer' || selection.mode === 'aim' || selection.mode === 'hirePlace' || selection.mode === 'summonPlace') {
-      selection.mode = 'moved'; selection.aim = null; selection.targetId = null;
+    if (selection.mode === 'forecast' || selection.mode === 'gateForecast' || selection.mode === 'prayer' || selection.mode === 'aim' || selection.mode === 'hirePlace' || selection.mode === 'summonPlace') {
+      selection.mode = 'moved'; selection.aim = null; selection.targetId = null; selection.gateKey = null;
     }
     else if (selection.mode === 'moved') { selection.mode = 'selected'; selection.pending = null; }
     else clearSelection();
@@ -284,6 +365,25 @@
     if (!isPlayerInputOpen() || isInputLocked()) return;
     if (selection.mode === 'prayer') commitPrayer(selection.targetId);
     else if (selection.mode === 'forecast') commitAction(selection.targetId);
+    else if (selection.mode === 'gateForecast') commitGate(selectedGate());
+  }
+
+  // ---- 城門（ステージ18から） ----
+  function getGateTargets() {
+    var unit = selectedUnit();
+    return unit ? SC.Game.getGateTargets(state, unit, selectedPosition()) : [];
+  }
+
+  function selectedGate() {
+    return getGateTargets().filter(function (g) { return tileKey(g.x, g.y) === selection.gateKey; })[0] || null;
+  }
+
+  function commitGate(gate) {
+    if (!gate) return;
+    var unit = selectedUnit();
+    var result = SC.Game.attackGate(state, unit.id, selectedPosition(), gate);
+    if (!result.ok) { SC.Screens.showToast(result.error); return; }
+    runAnimation(result.events, null);
   }
 
   function isInputLocked() { return Date.now() - lastModeChange < INPUT_LOCK_MS; }
@@ -291,10 +391,19 @@
   // コマンド（攻撃・祈る・待機）。攻撃と祈りは相手を選ぶ段階へ進む。相手が1人だけなら、そのまま見込みを出す
   function onCommand(command, summonChoice) {
     if (!isPlayerInputOpen() || selection.mode !== 'moved' || isInputLocked()) return;
+    // 構えの案内は、歩兵が多くて何度も出るとじゃまなので、案内を見てほかのコマンドを選んだときも、見たことにする
+    var braceShown = selection.pending && selection.pending.x === selectedUnit().x && selection.pending.y === selectedUnit().y && !selectedUnit().moved;   // 構えのボタンが光っていたか
+    if (command !== 'brace' && unitType(selectedUnit()).canBrace && braceShown && actionAssistKey('brace')) finishActionAssist('brace');
     if (command === 'wait') {
       // 向きを持つ部隊（騎士）は、待機する前に向きを選ぶ（上下左右の矢印）
       if (unitType(selectedUnit()).diagonalFront) {
         selection.mode = 'facing';
+        // 騎士の向きの案内（騎士がはじめて出るステージ7と、ステージ11から始める人のために11。それぞれ最初の1回だけ。2026-10-21 ユーザーの希望）
+        var assistKey = 'facingAssist_' + stage.id;
+        selection.facingAssist = FACING_ASSIST_STAGES.indexOf(stage.id) >= 0 && !options.save.seenTips[assistKey];
+        if (selection.facingAssist) {
+          SC.Screens.showToast('騎士は、止まるときに向きを選びます。光っている矢印のどれかをタップすると、その向きを向いて止まります。向いている側の斜めの敵には反撃できますが、斜め後ろからは反撃できません。敵のほうを向けて止めよう。', true);
+        }
         var at = selectedPosition();
         SC.Render.focusTiles([{ x: at.x - 1, y: at.y - 1 }, { x: at.x + 1, y: at.y + 1 }], { center: at, margin: 0.2 });   // 矢印が全部見えるように
         refresh();
@@ -312,12 +421,20 @@
       var summonTiles = SC.Game.getSummonTiles(state, summoner, summonType);
       selection.summonType = summonType;
       if (summonTiles.length === 1) { commitSummon(summonTiles[0]); return; }
+      if (actionAssistKey('summon')) SC.Screens.showToast(ACTION_ASSISTS.summon.choose, true);
       selection.mode = 'summonPlace';
       refresh();
       return;
     }
     var targets = command === 'attack' ? getAttackTargets() : getPrayerTargets();
+    if (command === 'attack') {
+      // 城門も攻撃の相手になる。相手が城門1つだけなら、そのまま見込みを出す
+      var gates = getGateTargets();
+      if (targets.length === 0 && gates.length === 1) { selection.mode = 'gateForecast'; selection.gateKey = tileKey(gates[0].x, gates[0].y); refresh(); return; }
+      if (gates.length > 0 && targets.length + gates.length > 1) { selection.mode = 'aim'; selection.aim = 'attack'; refresh(); return; }
+    }
     if (targets.length === 0) return;
+    if (command === 'prayer' && actionAssistKey('prayer')) SC.Screens.showToast(ACTION_ASSISTS.prayer.choose, true);
     if (targets.length === 1) {
       selection.mode = command === 'attack' ? 'forecast' : 'prayer';
       selection.targetId = targets[0].id;
@@ -373,10 +490,26 @@
     return { attacker: snapshot(attacker, attackPosition), defender: snapshot(target, target) };
   }
 
-  // そのマスの城がどちらの軍のものか（戦闘シーンの旗の色に使う）。最初に王が立っていた城を、その軍の城とする
+  // そのマスの城がどちらの軍のものか（戦闘シーンの旗の色に使う）。最初に王が立っていた城を、その軍の城とする。
+  // 城門・城壁は、守る軍（state.gateSide）のもの
   function getCastleOwner(x, y) {
+    var terrainId = state.terrain[y][x];
+    if (terrainId === 'gate' || terrainId === 'gateBroken') return state.gateSide || 'enemy';
+    // 城壁：2マス以内にある城の持ち主（2×2の城の左右の奥の城壁。要塞の石垣のように近くに城が無ければ、城門を守る軍）
+    if (terrainId === 'wall') {
+      for (var dy = -2; dy <= 2; dy++) {
+        for (var dx = -2; dx <= 2; dx++) {
+          var cx = x + dx, cy = y + dy;
+          if (cy < 0 || cy >= state.height || cx < 0 || cx >= state.width || state.terrain[cy][cx] !== 'castle') continue;
+          var anchor = SC.Board.canonical(state, cx, cy);
+          var owner = state.owners && (state.owners[anchor.x + ',' + anchor.y] || state.owners[cx + ',' + cy]);
+          if (owner) return owner;
+        }
+      }
+      return Object.keys(state.gates || {}).length ? (state.gateSide || 'enemy') : null;
+    }
     var king = stage.units.filter(function (placement) {
-      return placement.type === 'king' && placement.x === x && placement.y === y;
+      return SC.UNIT_TYPES[placement.type].isKing && placement.x === x && placement.y === y;
     })[0];
     return king ? king.side : null;
   }
@@ -452,6 +585,7 @@
     var unit = selectedUnit();
     var result = SC.Game.summonUnit(state, unit.id, selection.summonType, tile);
     if (!result.ok) { SC.Screens.showToast(result.error); return; }
+    finishActionAssist('summon');
     runAnimation(result.events, null);
   }
 
@@ -459,6 +593,7 @@
     var unit = selectedUnit();
     var result = SC.Game.brace(state, unit.id);
     if (!result.ok) { SC.Screens.showToast(result.error); return; }
+    finishActionAssist('brace');
     runAnimation(result.events, null);   // 構えの音は playEvents が鳴らす
   }
 
@@ -466,6 +601,7 @@
     var unit = selectedUnit();
     var result = SC.Game.pray(state, unit.id, selectedPosition(), allyId);
     if (!result.ok) { SC.Screens.showToast(result.error); return; }
+    finishActionAssist('prayer');
     runAnimation(result.events, null);
   }
 
@@ -597,8 +733,17 @@
     chain = hires.reduce(function (previous, event) {
       return previous.then(function () { return SC.Render.animateHire(state, event); });
     }, chain);
+    // 城門への攻撃（ステージ18から）：城門がゆれて「城門 −12」。壊れたら、壊れた城門の絵にする
+    chain = events.filter(function (event) { return event.type === 'gate'; }).reduce(function (previous, event) {
+      return previous.then(function () { return SC.Render.animateGate(state, event); });
+    }, chain);
+    var commanders = events.filter(function (event) { return event.type === 'commander'; });   // 指揮官が倒れた（ステージ19から）
     var afterStrikes = function () {
-      return showGrowth(growth).then(function () { return captures.reduce(function (previous, event) {
+      return showGrowth(growth).then(function () {
+        return commanders.reduce(function (previous, event) {
+          return previous.then(function () { SC.Sound.play('victory', 0.3); return SC.Render.showBanner((GROUP_NAMES[event.group] || '') + 'の指揮官を倒した！　' + (GROUP_NAMES[event.group] || '') + 'の増援が止まった', 'player'); });
+        }, Promise.resolve());
+      }).then(function () { return captures.reduce(function (previous, event) {
         return previous.then(function () {
           // そのステージで自軍が最初に町を取ったときだけ、町の通りの場面を見せる（戦闘シーンをオフにしていれば出さない）
           var isTown = state.terrain[event.y][event.x] === 'town';   // 砦を取ったときは、町の場面は出さない
@@ -737,7 +882,12 @@
     if (won) SC.Save.recordClear(options.save, stage.id, turns);
     if (won && state.experience && (state.deployed || []).length > 0) SC.Save.markExperienceEarned(options.save, stage.id);   // このステージの経験値は、もうもらった
     SC.Save.store(options.save);
+    // 勝ったあとの会話（ステージ20。ヴァルガスの最後のひと言）があれば、勝利の窓の前に出す
+    var endingTalk = won && (SC.ENDING_TALKS || {})[stage.id];
     SC.Render.sleep(450).then(function () {
+      if (mySession !== session || !endingTalk || !SC.TalkScene) return;
+      return SC.TalkScene.play(endingTalk, state.deployed);
+    }).then(function () {
       if (mySession !== session) return;
       var best = options.save.stages[stage.id];
       var nextId = won ? SC.Save.getNextStage(options.save, stage.id, Object.keys(SC.STAGES).map(Number)) : null;   // 勝ったあとは、記録してから次を決める
@@ -747,7 +897,7 @@
         kind: won ? 'victory' : 'defeat',
         title: won ? '勝 利' : '敗 北',
         html: won
-          ? '<div class="result"><p class="result-lead">' + (state.survived ? turns + 'ターン、城を守りきった！' : '敵の王を討ち取った！') + '</p>' +
+          ? '<div class="result"><p class="result-lead">' + (state.survived ? turns + 'ターン、城を守りきった！' : (stage.victoryLead || '敵の王を討ち取った！')) + '</p>' +
             '<div class="result-stats">' +
               '<div><span>' + (state.survived ? '守りきったターン' : 'かかったターン') + '</span><b>' + turns + '</b><small>ターン</small></div>' +
               '<div><span>最少記録</span><b>' + best.bestTurns + '</b><small>ターン</small>' + (newRecord ? '<em>記録更新</em>' : '') + '</div>' +
@@ -758,8 +908,15 @@
               '<div><span>倒した敵の部隊</span><b>' + ((state.fallenCount && state.fallenCount.enemy) || 0) + '</b><small>部隊</small></div>' +
             '</div>' +
             '<div class="result-hint"><span>次への助言</span>' + stage.defeatHint + '</div></div>',
-        stacked: won && !!nextStage,
-        buttons: won && nextStage
+        stacked: won && (!!nextStage || !!stage.endingStory),
+        buttons: won && stage.endingStory
+          ? [
+            // 最後のステージ：エンディングを見てから、タイトルへ
+            { label: 'エンディングへ', style: 'primary', onTap: function () { SC.EndingScene.play({ story: stage.endingStory }).then(function () { exitToTitle(); }); } },
+            { label: 'もう一度', onTap: restart },
+            { label: 'タイトルへ', onTap: exitToTitle }
+          ]
+          : won && nextStage
           ? [
             { label: '次のステージへ', style: 'primary', onTap: function () { if (options.onNext) options.onNext(nextStage.id); else start(nextStage.id, options); } },
             { label: 'もう一度', onTap: restart },
@@ -804,8 +961,8 @@
   function showGoal() {
     var text = stage.goalText;
     var survive = SC.Game.getSurviveTurns(state);
-    if (survive) {
-      text += '\n\nあと ' + Math.max(0, survive - state.turn + 1) + ' ターン守れば勝ち（ターン' + survive + 'の敵の番まで）';
+    if (survive) text += '\n\nあと ' + Math.max(0, survive - state.turn + 1) + ' ターン守れば勝ち（ターン' + survive + 'の敵の番まで）';
+    if (survive || state.rules.waveNotice) {
       var next = SC.Game.getNextReinforcement(state);
       text += next ? '\n次の増援：ターン' + next.turn + '・' + next.from + 'から（' + describeWave(next) + '）' : '\nもう増援は来ません';
     }
@@ -874,7 +1031,7 @@
       view.pending = selection.pending;
       if (selection.mode === 'facing') {
         // 騎士の向きを選ぶ：まわりに矢印を出し、反撃できる範囲（その向きの前と斜め前）を赤い斜線で見せる
-        view.facingChoice = { x: position.x, y: position.y, current: SC.Movement.getFacing(unit) };
+        view.facingChoice = { x: position.x, y: position.y, current: SC.Movement.getFacing(unit), assist: !!selection.facingAssist };
         view.cursorKey = tileKey(position.x, position.y);
         return view;
       }
@@ -897,6 +1054,7 @@
       }
       if (selection.mode === 'aim') {
         (selection.aim === 'attack' ? getAttackTargets() : []).forEach(function (enemy) { view.targetTiles[tileKey(enemy.x, enemy.y)] = true; });
+        (selection.aim === 'attack' ? getGateTargets() : []).forEach(function (gate) { view.targetTiles[tileKey(gate.x, gate.y)] = true; });
         (selection.aim === 'prayer' ? getPrayerTargets() : []).forEach(function (ally) { view.allyTiles[tileKey(ally.x, ally.y)] = true; });
         return view;
       }
@@ -915,6 +1073,8 @@
         if (SC.Movement.isInAttackRange(unit.type, position, enemy)) view.targetTiles[tileKey(enemy.x, enemy.y)] = true;
       });
       SC.Prayer.getPrayerTargets(state, unit, position).forEach(function (ally) { view.allyTiles[tileKey(ally.x, ally.y)] = true; });
+      if (selection.mode !== 'selected') getGateTargets().forEach(function (gate) { view.targetTiles[tileKey(gate.x, gate.y)] = true; });
+      if (selection.mode === 'gateForecast') view.cursorKey = selection.gateKey;
       if (selection.mode === 'prayer') {
         var prayerTarget = SC.Board.getUnitById(state, selection.targetId);
         view.cursorKey = tileKey(prayerTarget.x, prayerTarget.y);
@@ -968,11 +1128,41 @@
   // 騎士の向きを選んだ：その向きで待機する
   function onFacingChosen(facing) {
     if (!isPlayerInputOpen() || selection.mode !== 'facing' || isInputLocked()) return;
+    if (selection.facingAssist) {
+      // 向きを選んだら、案内は見たことにする（選ぶ前にやめたときは、次にもう一度出す）
+      options.save.seenTips['facingAssist_' + stage.id] = true;
+      SC.Save.store(options.save);
+      SC.Screens.hideToast();
+    }
+    selection.facingAssist = false;
     commitAction(null, facing);
   }
 
   function renderControls() {
     var surviveTurns = SC.Game.getSurviveTurns(state);
+    // 増援の予告（ステージ18から。rules.waveNotice）：次の増援まで、あと何ターンか
+    // 上の帯はせまいので、マップの左上に出す
+    // 組のある増援（ステージ19：北と南）は、組ごとに「北の増援 あと2／南 あと1」
+    var waveNotice = byId('wave-notice');
+    if (waveNotice) {
+      var lines = [];
+      if (state.rules.waveNotice) {
+        var groups = [];
+        (state.reinforcements || []).forEach(function (wave) { if (wave.group && groups.indexOf(wave.group) < 0) groups.push(wave.group); });
+        var describeWait = function (wave) { var wait = Math.max(0, wave.turn - state.turn); return wait === 0 ? 'この敵の番' : 'あと' + wait; };
+        if (groups.length) {
+          groups.forEach(function (group) {
+            var next = SC.Game.getNextReinforcement(state, group);
+            if (next) lines.push((GROUP_NAMES[group] || group) + 'の増援 ' + describeWait(next));
+          });
+        } else {
+          var nextWave = SC.Game.getNextReinforcement(state);
+          if (nextWave) lines.push(Math.max(0, nextWave.turn - state.turn) === 0 ? '敵の増援：この敵の番' : '敵の増援まで あと' + Math.max(0, nextWave.turn - state.turn) + 'ターン');
+        }
+      }
+      waveNotice.classList.toggle('hidden', lines.length === 0);
+      waveNotice.textContent = lines.join('／');
+    }
     byId('turn-label').innerHTML = '<span class="turn-text">ターン ' + state.turn + (surviveTurns ? '<small class="turn-limit">／' + surviveTurns + '</small>' : '') + '</span>' +
       ' <span class="side-chip ' + state.side + '">' + SC.SIDE_NAMES[state.side] + 'の番</span>' +
       (SC.Economy.isEnabled(state)
@@ -988,7 +1178,7 @@
     undoButton.disabled = !open || mode === 'idle';
     undoButton.textContent = mode === 'idle' || mode === 'selected' ? 'やり直す' : 'もどる';
     // 決定ボタンは、攻撃・祈りの見込みを出しているときだけ出す（「待機」はコマンドの枠の中にある）
-    var deciding = open && (mode === 'forecast' || mode === 'prayer');
+    var deciding = open && (mode === 'forecast' || mode === 'gateForecast' || mode === 'prayer');
     confirmButton.disabled = !deciding;
     confirmButton.classList.toggle('invisible', !deciding);
     confirmButton.textContent = mode === 'prayer' ? '祈る' : '攻撃する';
@@ -1007,26 +1197,36 @@
     if (!visible) return;
     var unit = selectedUnit();
     var title = unitType(unit).name + 'の行動';
-    var commands = [{ id: 'attack', label: '攻撃', note: '届く敵なし', enabled: getAttackTargets().length > 0 }];
+    var commands = [{ id: 'attack', label: '攻撃', note: '届く敵なし', enabled: getAttackTargets().length > 0 || getGateTargets().length > 0 }];
       var stayed = selection.pending && selection.pending.x === unit.x && selection.pending.y === unit.y;
       if (unitType(unit).isKing && SC.Economy.isKingInOwnCastle(state, unit) && SC.Economy.getHireDestinations(state, unit, 'infantry').length > 0) {
         commands.push({ id: 'hire', label: '雇う', note: '動くと雇えない', enabled: stayed });
       }
-      if (SC.Prayer.canPray(unit)) commands.push({ id: 'prayer', label: '祈る', note: '祈れる味方なし', enabled: getPrayerTargets().length > 0 });
-      if (unitType(unit).canBrace) commands.push({ id: 'brace', label: '構え', note: '動くと構えられない', enabled: stayed && !unit.moved });
+      if (SC.Prayer.canPray(unit)) {
+        var canPrayNow = getPrayerTargets().length > 0;
+        commands.push({ id: 'prayer', label: '祈る', note: '祈れる味方なし', enabled: canPrayNow, assist: canPrayNow && !!actionAssistKey('prayer') });
+      }
+      if (unitType(unit).canBrace) {
+        var canBraceNow = stayed && !unit.moved;
+        commands.push({ id: 'brace', label: '構え', note: '動くと構えられない', enabled: canBraceNow, assist: canBraceNow && !!actionAssistKey('brace') });
+      }
       if (unitType(unit).summon) {
         // 呼べるものが2つ以上（ウィザード）なら、「召喚：スケルトン」「召喚：ゴーレム」のように、ものごとにボタンを出す
         var summonTypes = unitType(unit).summon.types;
         summonTypes.forEach(function (typeId) {
           var summonError = stayed ? SC.Game.checkSummon(state, unit, typeId, null) : '動くと召喚できない';
           var choice = summonTypes.length > 1;
-          commands.push({ id: 'summon', summonType: typeId, choice: choice, label: choice ? '召喚<i>' + SC.UNIT_TYPES[typeId].name + '</i>' : '召喚', note: summonError || '', enabled: !summonError });
+          commands.push({ id: 'summon', summonType: typeId, choice: choice, label: choice ? '召喚<i>' + SC.UNIT_TYPES[typeId].name + '</i>' : '召喚', note: summonError || '', enabled: !summonError,
+            assist: !summonError && !!actionAssistKey('summon') });
         });
       }
       commands.push({ id: 'wait', label: '待機', note: '', enabled: true });
+      // 祈り・召喚の案内：光らせるボタンがあれば、説明を出す（ボタンを押すまで消えない）
+      var assisted = commands.filter(function (command) { return command.assist; })[0];
+      if (assisted) SC.Screens.showToast(ACTION_ASSISTS[assisted.id].menu, true);
     menu.innerHTML = '<div class="command-title">' + title + '</div><div class="command-list">' +
       commands.map(function (command) {
-        return '<button type="button" class="command ' + command.id + (command.choice ? ' choice' : '') + '" data-command="' + command.id + '"' +
+        return '<button type="button" class="command ' + command.id + (command.choice ? ' choice' : '') + (command.assist ? ' assist' : '') + '" data-command="' + command.id + '"' +
           (command.typeId ? ' data-type="' + command.typeId + '"' : '') + (command.summonType ? ' data-summon="' + command.summonType + '"' : '') +
           (command.enabled ? '' : ' disabled') + '>' +
           '<span class="command-icon"></span><span class="command-label">' + command.label + '</span>' +
@@ -1078,6 +1278,7 @@
     if (unit.side === 'enemy' && selection.mode === 'idle') {
       lastLine = '橙：移動範囲　赤い斜線：攻撃範囲' + (state.rules.zoneHints ? '　点線：なわばり' : '');
     }
+    if (unit.commander) lastLine = '指揮官：倒すと' + (GROUP_NAMES[unit.commander] || '') + 'の増援が止まる';
     var imagePath = (unit.regularId && (SC.Render.getPortraitPath(unit.regularId) || SC.Render.getRegularArtPath(unit.regularId, unit.type, 'map'))) || SC.Render.getUnitImagePath(unit.type, unit.side);   // 正規部隊は隊長の顔
     var portrait = imagePath ? '<img class="portrait ' + unit.side + '" src="' + imagePath + '" alt="">' : '';
     var affinityLine = state.rules.affinity ? describeAffinity(type) : '';
@@ -1157,6 +1358,15 @@
     if (selection.mode === 'forecast') {
       return buildForecastHtml(selectedUnit(), selectedPosition(), SC.Board.getUnitById(state, selection.targetId));
     }
+    if (selection.mode === 'gateForecast') {
+      var gate = selectedGate();
+      if (gate) {
+        var damage = Math.min(gate.hp, SC.Game.getGateDamage(selectedUnit()));
+        return '<span class="name">' + unitType(selectedUnit()).name + ' → 城門</span>　<span class="outlook">城門を攻める</span><br>' +
+          '城門の体力 ' + gate.hp + ' → <b>' + (gate.hp - damage) + '</b><span class="strong">（−' + damage + '）</span>' + (damage >= gate.hp ? '　<b>壊せる！</b>' : '') + '<br>' +
+          '<span class="dim">城門は反撃しません。大型（ゴーレム・ドラゴン）は2倍削れます</span>';
+      }
+    }
     if (selection.mode !== 'idle') return buildUnitInfoHtml(selectedUnit(), selectedPosition());
     if (selection.inspect && selection.inspect.unitId) {
       var unit = SC.Board.getUnitById(state, selection.inspect.unitId);
@@ -1193,6 +1403,7 @@
     if (selection.mode === 'facing') return '矢印をタップして、騎士の向きを決める';
     if (selection.mode === 'summonPlace') return '召喚するマス（緑の枠）をタップ／「もどる」でやめる';
     if (selection.mode === 'aim') return selection.aim === 'attack' ? '攻撃する敵（赤い枠）をタップ' : '祈る味方（緑の枠）をタップ';
+    if (selection.mode === 'gateForecast') return '「攻撃する」で城門を攻める／「もどる」で戻る';
     if (selection.mode === 'forecast') {
       var braced = SC.Board.getUnitById(state, selection.targetId).braced;
       return braced ? '相手は構えている：先に攻撃されます' : '「攻撃する」で確定／「もどる」で戻る';

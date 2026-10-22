@@ -2,7 +2,7 @@
 (function (root) {
   var SC = (root.SC = root.SC || {});
 
-  SC.TERRAIN_SYMBOLS = { '.': 'plain', F: 'forest', C: 'castle', W: 'lake', T: 'town', S: 'fort', M: 'swamp', B: 'bramble', G: 'graveyard', A: 'cathedral', X: 'wall' };   // M：沼、B：藪、G：墓地、A：大聖堂、X：城壁
+  SC.TERRAIN_SYMBOLS = { '.': 'plain', F: 'forest', C: 'castle', W: 'lake', T: 'town', S: 'fort', M: 'swamp', B: 'bramble', G: 'graveyard', A: 'cathedral', X: 'wall', D: 'gate', P: 'peak' };   // M：沼、B：藪、G：墓地、A：大聖堂、X：城壁、D：城門、P：高山
 
   SC.STAGES = {
     1: {
@@ -628,6 +628,7 @@
         { x: 1, y: 10, owner: 'player' },
         { x: 10, y: 10, owner: 'player' }
       ],
+      requiredRegulars: ['gail'],   // ガイル隊は必ず出撃（このステージで加わり、会話で話すため。2026-10-21 ユーザーの希望）
       regularSlots: [{ x: 4, y: 12 }, { x: 5, y: 12 }, { x: 6, y: 12 }, { x: 4, y: 13 }],
       units: [
         { type: 'king', side: 'player', x: 5, y: 13 },
@@ -736,6 +737,7 @@
         { x: 1, y: 10, owner: 'player' },
         { x: 10, y: 10, owner: 'player' }
       ],
+      requiredRegulars: ['bran'],   // ブラン隊は必ず出撃（このステージで加わり、会話で話すため）
       regularSlots: [{ x: 5, y: 14 }, { x: 6, y: 14 }, { x: 7, y: 14 }, { x: 5, y: 15 }],
       units: [
         { type: 'king', side: 'player', x: 6, y: 15 },
@@ -871,6 +873,244 @@
         { turn: 4, from: '墓地', units: [{ type: 'skeleton', x: 1, y: 4 }, { type: 'skeleton', x: 10, y: 4 }, { type: 'golem', x: 6, y: 3 }] },
         { turn: 7, from: '墓地', units: [{ type: 'skeleton', x: 1, y: 8 }, { type: 'skeleton', x: 10, y: 8 }, { type: 'wizard', x: 6, y: 2 }] },
         { turn: 10, from: '墓地', units: [{ type: 'skeleton', x: 3, y: 5 }, { type: 'skeleton', x: 8, y: 5 }, { type: 'golem', x: 5, y: 3 }] }
+      ]
+    },
+    // ステージ18（2026-10-21 合意）：鉄壁の要塞。石垣（城壁）で囲まれた要塞に、城門（D）が2つ。最後の章：よく考えないと勝てない・15ターン以上
+    18: {
+      id: 18,
+      title: 'ステージ18　鉄壁の要塞',
+      intro: '死者の都を抜けた王の軍は、敵国の王都を守る最後の要塞にたどり着いた。高い石垣が続き、閉ざされた城門の向こうで、重い鎧の兵たちが待ち構えている。「正面から行けば、門の前で狙い撃ちにされる……。どこから崩すかだな」ガイルがつぶやいた。',
+      newRule: 'gate',
+      ruleNote: '新しい決まり：城門と重装兵長\n要塞の中へは、城門を壊さないと入れません（空の部隊も城門の上は通れませんが、石垣は越えられます）。城門のとなり（弓と魔法は2マス先）から「攻撃」で城門を選ぶと、体力を削れます。城門は反撃しません。ゴーレムやドラゴンなどの大型は2倍削れます。このステージから、重装兵長（150G）を雇えます。敵の増援が来るときは、上に「増援まで あとNターン」と出ます。',
+      goalText: '勝利：敵の王を倒す\n敗北：自軍の王が倒される',
+      defeatHint: '城門の前は、中の弓兵に狙われます。硬い部隊で城門を叩き、弓兵や魔法使いは少し下がって。外の砦を先に取ると、そこで雇えて収入も増えます。空の部隊なら石垣を越えて、中の弓兵を先に倒せます。',
+      rules: { zoneOfControl: true, economy: true, affinity: true, experience: true, maxUnits: 10, waveNotice: true, incomeScale: { enemy: 0.75 },   // 自動対戦で調整（半分だと勝率ほぼ100％）
+        hireTypes: ['infantry', 'archer', 'cleric', 'cavalry', 'harpy', 'griffin', 'wyvern', 'mage', 'heavyGuard'] },
+      gold: { player: 80, enemy: 60 },
+      music: 'map',
+      battleMusic: null,
+      bossMusic: 'boss',
+      map: [
+        '.F..XCCX..F.',
+        '.T...CC...T.',
+        '............',
+        '..F......F..',
+        '............',
+        'F...F..F...F',
+        '............',
+        '............',
+        'XXXDXXXXDXXX',
+        '............',
+        '..F......F..',
+        '............',
+        '..S..FF..S..',
+        '............',
+        'F..........F',
+        '...F....F...',
+        '............',
+        '.T........T.',
+        '.....CC.....',
+        '....XCCX....'
+      ],
+      towns: [
+        { x: 1, y: 1, owner: 'enemy' },
+        { x: 10, y: 1, owner: 'enemy' },
+        { x: 2, y: 12, owner: 'enemy' },    // 外の砦
+        { x: 9, y: 12, owner: 'enemy' },    // 外の砦
+        { x: 1, y: 17, owner: 'player' },
+        { x: 10, y: 17, owner: 'player' }
+      ],
+      regularSlots: [{ x: 4, y: 17 }, { x: 5, y: 17 }, { x: 6, y: 17 }, { x: 7, y: 17 }],
+      units: [
+        { type: 'king', side: 'player', x: 5, y: 18 },
+        { type: 'heavyGuard', side: 'player', x: 4, y: 18 },   // 傭兵の重装兵長
+        { type: 'king', side: 'enemy', x: 5, y: 0 },
+        { type: 'heavyGuard', side: 'enemy', x: 4, y: 1, role: 'guard' },
+        { type: 'heavyGuard', side: 'enemy', x: 7, y: 1, role: 'guard' },
+        { type: 'archer', side: 'enemy', x: 3, y: 7 },   // 城門のすぐ奥
+        { type: 'archer', side: 'enemy', x: 8, y: 7 },
+        { type: 'archer', side: 'enemy', x: 6, y: 6 },
+        { type: 'wizard', side: 'enemy', x: 5, y: 4 },
+        { type: 'dragon', side: 'enemy', x: 6, y: 3, role: 'guard' },   // 要塞の中で待つ
+        { type: 'heavyGuard', side: 'enemy', x: 2, y: 6 },   // 要塞の中を厚く（自動対戦で追加）
+        { type: 'heavyGuard', side: 'enemy', x: 9, y: 6 },
+        { type: 'mage', side: 'enemy', x: 7, y: 5 },
+        { type: 'archer', side: 'enemy', x: 4, y: 6 },
+        { type: 'cavalry', side: 'enemy', x: 2, y: 12 },   // 外の砦
+        { type: 'cavalry', side: 'enemy', x: 9, y: 12 },
+        { type: 'infantry', side: 'enemy', x: 3, y: 13 },
+        { type: 'infantry', side: 'enemy', x: 8, y: 13 }
+      ],
+      reinforcements: [
+        { turn: 8, from: '要塞の奥', units: [{ type: 'infantry', x: 2, y: 4 }, { type: 'infantry', x: 9, y: 4 }, { type: 'archer', x: 5, y: 5 }] },
+        { turn: 14, from: '要塞の奥', units: [{ type: 'heavyGuard', x: 2, y: 3 }, { type: 'archer', x: 9, y: 3 }, { type: 'archer', x: 5, y: 6 }] }
+      ]
+    },
+    // ステージ19（2026-10-21 合意）：二つの戦線。真ん中の自軍の城（2×2）を、北と南から同時に攻められる。
+    // 城のまわりは高山（P。空の部隊も越えられない）で囲み、上下左右に1マスずつ通り道を残す（攻められるのは最大4部隊。2026-10-21 ユーザーの希望）。
+    // 北と南の指揮官（commander）を倒すと、その方向の増援が止まる（group）。最後の章：20ターン以上
+    19: {
+      id: 19,
+      title: 'ステージ19　二つの戦線',
+      intro: '要塞を破った王の軍は、王都へ続く平原の古い城に入った。だが、北の王都と南の砦から、敵の大軍が同時に押し寄せてくる。「挟まれたか……。それぞれの軍を率いる将を討てば、勢いは止まるはずです」セラが地図を指さした。',
+      newRule: 'commander',
+      ruleNote: '新しい決まり：指揮官と竜騎兵\n北と南の敵には、それぞれ指揮官（金の旗の印）がいます。指揮官を倒すと、その方向からの増援が止まります。マップの左上に、北と南の増援があと何ターンで来るかが出ます。自軍の城のまわりは高い山で、攻められるのは上下左右の4か所だけです。このステージから、竜騎兵（180G）を雇えます。',
+      goalText: '勝利：敵の王を倒す\n敗北：自軍の王が倒される',
+      defeatHint: '城の4つの入り口を守る部隊を残しながら、足の速い部隊で指揮官を狙おう。指揮官を倒すと、その方向の増援が止まって楽になります。空の部隊なら川を越えられます。',
+      rules: { zoneOfControl: true, economy: true, affinity: true, experience: true, maxUnits: 10, waveNotice: true, incomeScale: { enemy: 0.25 },   // 自動対戦で調整（半分だと、どの戦い方でもほぼ勝てなかった）
+        hireTypes: ['infantry', 'archer', 'cleric', 'cavalry', 'harpy', 'griffin', 'wyvern', 'mage', 'heavyGuard', 'dragoon'] },
+      gold: { player: 150, enemy: 60 },
+      music: 'map',
+      battleMusic: null,
+      bossMusic: 'boss',
+      // 高山（P）は、城のまわりのほかに、山並みとしてマップのあちこちにも置く（2026-10-21 ユーザーの希望：城のまわりだけだと不自然）
+      map: [
+        '..F...XCCX...F..',
+        '.T.....CC.....T.',
+        '..PP........PP..',
+        '...F........F...',
+        'WWWW.WWWWWW.WWWW',
+        '.P............P.',
+        '..F..PP..PP..F..',
+        '......P.PP......',
+        '.T....PCC.....T.',
+        '.......CCP......',
+        '......PP.P......',
+        '..F..PP..PP..F..',
+        '.P............P.',
+        'WWWW.WWWWWW.WWWW',
+        '...F........F...',
+        '..PP........PP..',
+        '.T......S.....T.',
+        '..F..........F..'
+      ],
+      towns: [
+        { x: 1, y: 1, owner: 'enemy' },
+        { x: 14, y: 1, owner: 'enemy' },
+        { x: 1, y: 8, owner: 'player' },
+        { x: 14, y: 8, owner: 'player' },
+        { x: 1, y: 16, owner: 'enemy' },
+        { x: 14, y: 16, owner: 'enemy' },
+        { x: 8, y: 16, owner: 'enemy' }    // 南の砦
+      ],
+      regularSlots: [{ x: 9, y: 8 }, { x: 6, y: 9 }, { x: 10, y: 8 }, { x: 5, y: 9 }],
+      units: [
+        { type: 'king', side: 'player', x: 7, y: 8 },
+        { type: 'heavyGuard', side: 'player', x: 7, y: 7 },   // 傭兵（上の入り口）
+        { type: 'archer', side: 'player', x: 8, y: 10 },      // 傭兵（下の入り口）
+        // 北（敵の王の軍）。はじめは少なめで、増援で増える（自動対戦で調整：はじめから全部いると3ターンで負けた）
+        { type: 'king', side: 'enemy', x: 7, y: 0 },
+        { type: 'heavyGuard', side: 'enemy', x: 6, y: 1, role: 'guard' },
+        { type: 'heavyGuard', side: 'enemy', x: 9, y: 1, role: 'guard' },
+        { type: 'heavyGuard', side: 'enemy', x: 8, y: 3, commander: 'north' },   // 北の指揮官
+        { type: 'cavalry', side: 'enemy', x: 5, y: 3 },
+        { type: 'wizard', side: 'enemy', x: 8, y: 2 },
+        // 南（砦の軍）
+        { type: 'cavalry', side: 'enemy', x: 8, y: 15, commander: 'south' },   // 南の指揮官
+        { type: 'infantry', side: 'enemy', x: 5, y: 14 },
+        { type: 'infantry', side: 'enemy', x: 11, y: 14 },
+        { type: 'archer', side: 'enemy', x: 7, y: 16 },
+        { type: 'dragon', side: 'enemy', x: 8, y: 17, role: 'guard' }   // 南の砦を守る
+      ],
+      // 増援は8ターンごとに2部隊ずつ（自動対戦で調整。4ターンごとだと、どの戦い方でも押しつぶされた）
+      reinforcements: [
+        { turn: 8, group: 'north', from: '北の王都', units: [{ type: 'wyvern', x: 4, y: 3 }, { type: 'cavalry', x: 11, y: 2 }] },
+        { turn: 8, group: 'south', from: '南の砦', units: [{ type: 'cavalry', x: 4, y: 15 }, { type: 'infantry', x: 11, y: 15 }] },
+        { turn: 16, group: 'north', from: '北の王都', units: [{ type: 'wyvern', x: 4, y: 3 }, { type: 'cavalry', x: 11, y: 2 }] },
+        { turn: 16, group: 'south', from: '南の砦', units: [{ type: 'cavalry', x: 4, y: 15 }, { type: 'infantry', x: 11, y: 15 }] }
+      ]
+    },
+    // ステージ20（2026-10-21 合意）：王都決戦。最後のステージ。3つの段階（外の城門 → 城下町 → 王の間）。ボスは覇王ヴァルガス（kingBoss）。
+    // 王の間の城（2×2）は、城壁と高山で入り口を4か所にする。北と南の指揮官を倒すと、その方向の増援が止まる。30ターン以上
+    20: {
+      id: 20,
+      title: 'ステージ20　王都決戦',
+      intro: 'ついに王の軍は、敵国の王都の前に立った。高い石垣の奥、山に守られた王城に、覇王ヴァルガスが待つ。かつて大陸一の騎士と呼ばれた男は、片目を失った戦で、ひとつの国を手に入れたという。この戦いで、すべてが決まる。',
+      newRule: 'finale',
+      ruleNote: '最後の戦い：王都決戦\n外の石垣の城門を破り、城下町を抜けて、内の城門の奥の王城を目指します。王城のまわりは石垣と山で、攻められるのは4か所だけ。城下町の砦を取れば、そこで部隊を雇えます。北と南の指揮官（金の旗）を倒すと、その方向の増援が止まります。覇王ヴァルガスは、今までの王より強い強敵です。',
+      goalText: '勝利：覇王ヴァルガスを倒す\n敗北：自軍の王が倒される',
+      victoryLead: '覇王ヴァルガスを討ち取った！',   // 勝利の窓の1行目
+      // エンディング（勝ったあと、勝利の窓の「エンディングへ」で出す。2026-10-22 合意）
+      endingStory: [
+        '覇王ヴァルガスが倒れ、長い戦いは終わった。五つに分かれていた王国セルトリアは、若き王のもとで、再びひとつになった。',
+        '王都の城には、青い旗がひるがえる。戦いで傷ついた町にも、少しずつ人々の笑い声が戻ってきた。'
+      ],
+      defeatHint: '一度に全部を攻めず、外の城門 → 城下町の砦 → 内の城門と、足場を作りながら進もう。指揮官を倒すと増援が止まって楽になります。ドラゴンとワイバーンには弓、ゴーレムやドラゴンで城門を叩くと早く壊せます。',
+      requiredRegulars: ['aldo'],   // アルド隊は必ず出撃（会話で最初に話すため）
+      rules: { zoneOfControl: true, economy: true, affinity: true, experience: true, maxUnits: 10, waveNotice: true, incomeScale: { enemy: 0.25 },
+        hireTypes: ['infantry', 'archer', 'cleric', 'cavalry', 'harpy', 'griffin', 'wyvern', 'mage', 'heavyGuard', 'dragoon'] },
+      gold: { player: 150, enemy: 60 },
+      music: 'map',
+      battleMusic: null,
+      bossMusic: 'boss',
+      map: [
+        '.F..PPCCPP..F.',   // 王城の左右の奥は高山（空の部隊も入れない。入り口は4か所）
+        '.T..P.CC.P..T.',
+        '....PP..PP....',
+        '..F........F..',
+        '......F.......',
+        '..P........P..',
+        '...F......F...',
+        '..............',
+        'XXXXXXDXXXXXXX',
+        '..............',
+        '.T..........T.',
+        '...F......F...',
+        '..............',
+        '....S....S....',
+        'WWW.WWWWWW.WWW',
+        '..............',
+        '.T..F....F..T.',
+        '..............',
+        '..............',
+        'XXXDXXXXXXDXXX',
+        '..............',
+        '..F...FF...F..',
+        '.T..........T.',
+        '..............',
+        '......CC......',
+        '.F...XCCX...F.'
+      ],
+      towns: [
+        { x: 1, y: 1, owner: 'enemy' }, { x: 12, y: 1, owner: 'enemy' },
+        { x: 1, y: 10, owner: 'enemy' }, { x: 12, y: 10, owner: 'enemy' },
+        { x: 4, y: 13, owner: 'enemy' }, { x: 9, y: 13, owner: 'enemy' },   // 城下町の砦
+        { x: 1, y: 16, owner: 'enemy' }, { x: 12, y: 16, owner: 'enemy' },
+        { x: 1, y: 22, owner: 'player' }, { x: 12, y: 22, owner: 'player' }
+      ],
+      regularSlots: [{ x: 5, y: 23 }, { x: 6, y: 23 }, { x: 7, y: 23 }, { x: 8, y: 23 }],
+      units: [
+        { type: 'king', side: 'player', x: 6, y: 24 },
+        { type: 'heavyGuard', side: 'player', x: 5, y: 24 },   // 傭兵
+        { type: 'dragoon', side: 'player', x: 8, y: 24 },      // 傭兵
+        // 王の間
+        { type: 'kingBoss', side: 'enemy', x: 6, y: 0 },
+        { type: 'heavyGuard', side: 'enemy', x: 5, y: 1, role: 'guard' },
+        { type: 'heavyGuard', side: 'enemy', x: 8, y: 1, role: 'guard' },
+        { type: 'priest', side: 'enemy', x: 6, y: 3 },
+        { type: 'dragon', side: 'enemy', x: 7, y: 4, role: 'guard' },
+        // 城下町
+        { type: 'heavyGuard', side: 'enemy', x: 6, y: 9, commander: 'north' },   // 北の指揮官
+        { type: 'wizard', side: 'enemy', x: 6, y: 10 },
+        { type: 'archer', side: 'enemy', x: 4, y: 10 },
+        { type: 'archer', side: 'enemy', x: 9, y: 10 },
+        { type: 'dragoon', side: 'enemy', x: 3, y: 11 },
+        { type: 'dragoon', side: 'enemy', x: 10, y: 11 },
+        { type: 'cavalry', side: 'enemy', x: 6, y: 17, commander: 'south' },   // 南の指揮官
+        { type: 'cavalry', side: 'enemy', x: 5, y: 15 },
+        { type: 'cavalry', side: 'enemy', x: 8, y: 15 },
+        // 外の城門の内側
+        { type: 'infantry', side: 'enemy', x: 3, y: 18 },
+        { type: 'infantry', side: 'enemy', x: 10, y: 18 },
+        { type: 'archer', side: 'enemy', x: 6, y: 18 }
+      ],
+      reinforcements: [
+        { turn: 8, group: 'north', from: '王城', units: [{ type: 'infantry', x: 2, y: 4 }, { type: 'archer', x: 11, y: 4 }] },
+        { turn: 8, group: 'south', from: '城下町', units: [{ type: 'cavalry', x: 1, y: 17 }, { type: 'infantry', x: 12, y: 17 }] },
+        { turn: 16, group: 'north', from: '王城', units: [{ type: 'wyvern', x: 2, y: 4 }, { type: 'heavyGuard', x: 11, y: 4 }] },
+        { turn: 16, group: 'south', from: '城下町', units: [{ type: 'cavalry', x: 1, y: 17 }, { type: 'archer', x: 12, y: 17 }] },
+        { turn: 24, group: 'north', from: '王城', units: [{ type: 'infantry', x: 2, y: 4 }, { type: 'archer', x: 11, y: 4 }] },
+        { turn: 24, group: 'south', from: '城下町', units: [{ type: 'cavalry', x: 1, y: 17 }, { type: 'infantry', x: 12, y: 17 }] }
       ]
     }
   };

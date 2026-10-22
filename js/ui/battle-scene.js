@@ -8,10 +8,16 @@
   // 列0が後ろ（画面の端側）、列1が前（中央側）。段0が奥、段2が手前。前の列の兵士から倒れる。
   var SMALL_SQUAD = { size: 64, columnStep: 46, rowStep: 24, rowShift: 10, slots: [[0, 1], [0, 0], [0, 2], [1, 1], [1, 0], [1, 2]] };
   var HEAVY_SQUAD = { size: 96, columnStep: 0, rowStep: 34, rowShift: 28, slots: [[0, 1], [0, 0], [0, 2]] };
+  // 王の部隊：王（いちばん最後まで残る1人）を前の列に出し、少し大きくして、近衛兵より手前に描く（2026-10-22。後ろに隠れて見えなかったため）
+  var KING_SQUAD = { size: 96, columnStep: 44, rowStep: 34, rowShift: 28, slots: [[1, 1], [0, 0], [0, 2]], leaderScale: 1.2 };
   var ESCORT_FALLBACK_TYPE = 'infantry';   // 近衛兵の絵がまだ無い間は、歩兵の絵で代用する
   var SOLDIER_INTERVAL = 110;              // 兵士が1人ずつ攻撃する間隔（ミリ秒）
 
-  function getFormation(typeId) { return SC.UNIT_TYPES[typeId].size > 3 ? SMALL_SQUAD : HEAVY_SQUAD; }
+  function getFormation(typeId) {
+    var type = SC.UNIT_TYPES[typeId];
+    if (type.isKing && type.size <= 3) return KING_SQUAD;
+    return type.size > 3 ? SMALL_SQUAD : HEAVY_SQUAD;
+  }
 
   function getBattleAssets() { return (SC.ASSETS && SC.ASSETS.battle) || { backgrounds: {}, units: {} }; }
 
@@ -76,9 +82,12 @@
       var slot = formation.slots[index % formation.slots.length];
       var edge = slot[0] * formation.columnStep + slot[1] * formation.rowShift;
       var bottom = (maxRow - slot[1]) * formation.rowStep;
+      var isLeader = formation.leaderScale && index === 0;
+      var size = isLeader ? Math.round(formation.size * formation.leaderScale) : formation.size;
+      var zIndex = isLeader ? maxRow + 2 : slot[1] + 1;
       html += '<div class="fighter ' + position + ' ' + fighter.side + '" data-slot="' + index + '" style="' +
         (position === 'left' ? 'left' : 'right') + ':calc(3% + ' + edge + 'px);bottom:calc(6% + ' + bottom + 'px);' +
-        'width:' + formation.size + 'px;height:' + formation.size + 'px;z-index:' + (slot[1] + 1) + '">' +
+        'width:' + size + 'px;height:' + size + 'px;z-index:' + zIndex + '">' +
         buildSoldierBodyHtml(fighter, index) + '</div>';
     }
     return html;

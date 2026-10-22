@@ -23,6 +23,9 @@
       graveyard: ['assets64/terrain/terrain_graveyard_1.png', 'assets64/terrain/terrain_graveyard_2.png'],   // 墓地（ステージ17から。2枚目は左右の反転。上下は反転しない）
       cathedral: ['assets64/terrain/terrain_cathedral_1.png'],   // 大聖堂（ステージ17から。砦と同じしくみ）
       wall: ['assets64/terrain/terrain_wall_1.png'],   // 城壁（2×2の城の左右の奥）
+      gate: ['assets64/terrain/terrain_gate_1.png'],   // 城門（ステージ18から）
+      peak: ['assets64/terrain/terrain_mountain.png'],   // 高山（ステージ19から。最初の素材の雪山の絵）
+      gateBroken: ['assets64/terrain/terrain_gateBroken_1.png'],   // 壊れた城門
       castle: ['assets64/buildings/building_castle.png'],
       town: ['assets64/buildings/building_town.png'],
       fort: ['assets64/buildings/building_fort.png']   // 砦（tools/make-fort.py で描いた）
@@ -44,11 +47,14 @@
       golem: { player: 'assets64/units/unit_golem_player.png', enemy: 'assets64/units/unit_golem_enemy.png' },   // ゴーレム（ステージ14から）
       dragon: { player: 'assets64/units/unit_dragon_player.png', enemy: 'assets64/units/unit_dragon_enemy.png' },   // ドラゴン（ステージ16から）
       saga: { player: 'assets64/units/unit_saga_player.png', enemy: 'assets64/units/unit_saga_enemy.png' },   // サーガ（一般の兵）
+      heavyGuard: { player: 'assets64/units/unit_general_player.png', enemy: 'assets64/units/unit_general_enemy.png' },   // 重装兵長（ジェネラルの一般の兵の絵）
       highPriest: { player: 'assets64/units/unit_highPriest_player.png', enemy: 'assets64/units/unit_highPriest_enemy.png' },   // ハイプリースト（一般の兵）
       elf: { player: 'assets64/units/unit_elf_player.png', enemy: 'assets64/units/unit_elf_enemy.png' },   // エルフ
       wyvern: { player: 'assets64/units/unit_wyvern_player.png', enemy: 'assets64/units/unit_wyvern_enemy.png' },   // ワイバーン
       general: { player: 'assets64/units/unit_general_player.png', enemy: 'assets64/units/unit_general_enemy.png' },   // ジェネラル
-      dragonKnight: { player: 'assets64/units/unit_dragonKnight_aldo_player.png', enemy: 'assets64/units/unit_dragonKnight_aldo_enemy.png' },   // ドラゴンナイト（隊長の絵が無いとき）
+      dragonKnight: { player: 'assets64/units/unit_dragoon_player.png', enemy: 'assets64/units/unit_dragoon_enemy.png' },   // ドラゴンナイト（一般の兵の絵＝竜騎兵の絵。2026-10-21）
+      dragoon: { player: 'assets64/units/unit_dragoon_player.png', enemy: 'assets64/units/unit_dragoon_enemy.png' },   // 竜騎兵（ステージ19から）
+      kingBoss: { player: 'assets64/units/unit_kingBoss_enemy.png', enemy: 'assets64/units/unit_kingBoss_enemy.png' },   // 覇王ヴァルガス（最初から紅・黒・銀で描いた絵。敵だけに出る）
       highElf: { player: 'assets64/units/unit_highElf_player.png', enemy: 'assets64/units/unit_highElf_enemy.png' }   // ハイエルフ
     },
     // タイトル画面の背景。video が再生できないとき（省電力モードなど）は poster の1枚絵を出す
@@ -144,6 +150,14 @@
         fort: 'assets64/battle/bg_castle.png',              // 砦：城の背景を使う
         summon: 'assets64/battle/bg_summon.png',            // 召喚の場面（無ければ森の背景）
         fort_enemy: 'assets64/battle/bg_castle_enemy.png',
+        // 城門・城壁（2026-10-22）。敵の城門は垂れ幕が赤の版。壊れた城門・城壁の上も同じ背景
+        gate: 'assets64/battle/bg_gate.png',
+        gate_enemy: 'assets64/battle/bg_gate_enemy.png',
+        gateBroken: 'assets64/battle/bg_gate.png',
+        gateBroken_enemy: 'assets64/battle/bg_gate_enemy.png',
+        wall: 'assets64/battle/bg_gate.png',
+        wall_enemy: 'assets64/battle/bg_gate_enemy.png',
+        peak: 'assets64/battle/bg_mountain.png',            // 高山（2026-10-22）
         fallback: 'assets64/battle/bg_plain.png'
       },
       units: {
@@ -163,16 +177,19 @@
         golem: { player: 'assets64/battle/battle_golem_player.png', enemy: 'assets64/battle/battle_golem_enemy.png' },
         dragon: { player: 'assets64/battle/battle_dragon_player.png', enemy: 'assets64/battle/battle_dragon_enemy.png' },
         saga: { player: 'assets64/battle/battle_saga_player.png', enemy: 'assets64/battle/battle_saga_enemy.png' },
+        heavyGuard: { player: 'assets64/battle/battle_general_player.png', enemy: 'assets64/battle/battle_general_enemy.png' },
         highPriest: { player: 'assets64/battle/battle_highPriest_player.png', enemy: 'assets64/battle/battle_highPriest_enemy.png' },
         elf: { player: 'assets64/battle/battle_elf_player.png', enemy: 'assets64/battle/battle_elf_enemy.png' },
         wyvern: { player: 'assets64/battle/battle_wyvern_player.png', enemy: 'assets64/battle/battle_wyvern_enemy.png' },
         general: { player: 'assets64/battle/battle_general_player.png', enemy: 'assets64/battle/battle_general_enemy.png' },
-        dragonKnight: { player: 'assets64/battle/battle_dragonKnight_aldo_player.png', enemy: 'assets64/battle/battle_dragonKnight_aldo_enemy.png' },
+        dragonKnight: { player: 'assets64/battle/battle_dragoon_player.png', enemy: 'assets64/battle/battle_dragoon_enemy.png' },   // 一般の兵の絵＝竜騎兵の絵
+        dragoon: { player: 'assets64/battle/battle_dragoon_player.png', enemy: 'assets64/battle/battle_dragoon_enemy.png' },
+        kingBoss: { player: 'assets64/battle/battle_kingBoss_enemy.png', enemy: 'assets64/battle/battle_kingBoss_enemy.png' },   // 覇王ヴァルガス
         highElf: { player: 'assets64/battle/battle_highElf_player.png', enemy: 'assets64/battle/battle_highElf_enemy.png' }
       },
       // 戦闘用の絵が、まだ隊長の顔のままのクラス（一般の兵の絵が届いたら、ここから外す）。
       // 正規部隊は先頭だけ隊長の姿で、残りは一般の兵の絵になるが、ここにあるクラスは全員を隊長の姿にする（js/ui/battle-scene.js）
-      captainLook: ['dragonKnight']   // 僧侶・プリースト・魔法使い・ウィザード・エルフ・ハイエルフ（2026-10-19）、ジェネラル（2026-10-20）は、一般の兵の絵が届いた
+      captainLook: []   // 僧侶・プリースト・魔法使い・ウィザード・エルフ・ハイエルフ（2026-10-19）、ジェネラル（2026-10-20）、ドラゴンナイト（2026-10-21。竜騎兵の絵）は、一般の兵の絵が届いた
     }
   };
 })(typeof window !== 'undefined' ? window : globalThis);

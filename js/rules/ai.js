@@ -39,6 +39,7 @@
     var score = dealt;
     if (targetIsKing) score += dealt * 0.5;
     if (threatensKing(state, target, unit.side)) score += 1.5;
+    if (target.commander) score += 3;   // 指揮官を倒すと増援が止まる
     if (forecast.canKill) {
       score += targetIsKing ? 1000 : 15;
     } else if (forecast.counter) {
@@ -92,6 +93,24 @@
     return best && best.score > 0 ? best : null;
   }
 
+  // 城門を攻める（攻める側だけ）：届く城門を、いちばん削れる部隊で攻める。王と回復役は攻めない
+  var GATE_WALK_COST = 4;   // 道のりを数えるとき、閉じた城門を「このくらい遠い」とみなす
+  function findGateAttack(state, units) {
+    if (!state.gates || Object.keys(state.gates).length === 0) return null;
+    var best = null;
+    units.forEach(function (unit) {
+      if (unit.side === state.gateSide || isKing(unit) || isHealer(unit)) return;
+      getDestinations(state, unit).forEach(function (destination) {
+        SC.Game.getGateTargets(state, unit, destination).forEach(function (gate) {
+          var damage = Math.min(gate.hp, SC.Game.getGateDamage(unit));
+          var score = damage / SC.GATE.hp * 4 + 0.5 + (damage >= gate.hp ? 2 : 0) - destination.cost * 0.01 - hazardPenalty(state, unit, destination);
+          if (!best || score > best.score) best = { unitId: unit.id, x: destination.x, y: destination.y, targetId: null, kind: 'gate', gateX: gate.x, gateY: gate.y, score: score };
+        });
+      });
+    });
+    return best;
+  }
+
   // 祈りの得点：戻せる人数を重く見る。敵のすぐ近く（2マス以内）に立つ祈りは少し下げる
   function findBestPrayer(state, units, enemies) {
     var best = null;
@@ -143,6 +162,7 @@
         var nx = current.x + d[0], ny = current.y + d[1];
         if (!SC.Board.inBounds(state, nx, ny)) return;
         var step = SC.Movement.getMoveCost(state.terrain[ny][nx], moveTypeId);
+        if (step === null && state.terrain[ny][nx] === 'gate') step = GATE_WALK_COST;   // 閉じた城門は、壊せば通れるので、遠回りとして数える
         if (step === null) return;
         var key = nx + ',' + ny;
         if (distances[key] === undefined || current.cost + step < distances[key]) {
@@ -286,6 +306,9 @@
     var attack = findBestAttack(state, units, enemies);
     var prayer = findBestPrayer(state, units, enemies);
     if (attack || prayer) return !prayer || (attack && attack.score >= prayer.score) ? attack : prayer;
+    // 城門を攻める側は、得な攻撃が無ければ、届く城門を攻める
+    var gateAttack = findGateAttack(state, units);
+    if (gateAttack) return gateAttack;
     // 魔法使いは、得な攻撃が無ければ、動く前に召喚する（敵にいちばん近い隣のマスへ）
     var summon = findSummon(state, units, enemies);
     if (summon) return summon;

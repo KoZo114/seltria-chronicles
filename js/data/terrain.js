@@ -90,6 +90,33 @@
       kingDamageReductionPercent: 0,
       description: '通れません（空を飛ぶ部隊は入れます）。'
     },
+    // 高山（ステージ19から）：空の部隊も越えられない高い山。真ん中の2×2の城のまわりを囲み、攻められる場所を上下左右の4か所にする（2026-10-21 ユーザーの希望）
+    peak: {
+      name: '高山',
+      moveCost: 1,
+      impassable: true,
+      blocksAll: true,
+      defense: 0,
+      kingDamageReductionPercent: 0,
+      description: '高い山。だれも越えられません（空を飛ぶ部隊も）。'
+    },
+    // 城門（ステージ18から）：体力のある門。壊すまで、だれも通れず、止まれない（空の部隊も）。壊れると「壊れた城門」になる（js/rules/game.js の attackGate）
+    gate: {
+      name: '城門',
+      moveCost: 1,
+      impassable: true,
+      blocksAll: true,
+      defense: 0,
+      kingDamageReductionPercent: 0,
+      description: '閉じた城門。攻撃して壊すまで、だれも通れません（空の部隊も）。'
+    },
+    gateBroken: {
+      name: '壊れた城門',
+      moveCost: 1,
+      defense: 0,
+      kingDamageReductionPercent: 0,
+      description: '壊れた城門。ふつうに通れます。'
+    },
     castle: {
       name: '城',
       bigBlock: true,   // マップで2×2に並べると、4マスで城1つ

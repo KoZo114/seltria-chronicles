@@ -121,6 +121,7 @@
   function getMoveCost(terrainId, moveTypeId) {
     var terrain = SC.TERRAIN[terrainId];
     var moveType = SC.MOVE_TYPES[moveTypeId] || SC.MOVE_TYPES.ground;
+    if (terrain.blocksAll) return null;   // 閉じた城門は、空の部隊も通れない
     if (terrain.impassable && !moveType.canEnterImpassable) return null;
     if (moveType.flatCost !== undefined) return moveType.flatCost;
     var override = moveType.costOverrides && moveType.costOverrides[terrainId];

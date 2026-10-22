@@ -73,7 +73,8 @@
         '<span class="hire-cost">' + type.cost + '<small>G</small></span></button>';
     }).join('');
     scene.innerHTML =
-      '<div id="hire-box"' + (options.choices.length > 4 ? ' class="compact"' : '') + '>' +   // 雇える部隊が多いときは、札を詰めて1画面に収める
+      // 雇える部隊が多いときは、札を詰める（5つから compact、9つから dense）。それでも入りきらないときは、札の一覧を指で動かせる
+      '<div id="hire-box"' + (options.choices.length > 8 ? ' class="compact dense"' : options.choices.length > 4 ? ' class="compact"' : '') + '>' +
         '<div id="hire-stage"' + (background ? ' style="background-image:url(&quot;' + background + '&quot;)"' : '') + '>' +
           '<div class="hire-aide">' + (aide ? '<img src="' + aide + '" alt="側近" draggable="false">' : '<div class="hire-aide-placeholder">側近</div>') + '</div>' +
           '<div class="hire-speech">' + getAideLine(options) + '<small>所持金 <b>' + options.gold + 'G</b></small></div>' +

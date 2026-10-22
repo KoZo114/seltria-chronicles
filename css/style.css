@@ -311,6 +311,9 @@ body { position: fixed; inset: 0; }
 .prep-card.on { opacity: 1; border-color: #e9c35c; background: linear-gradient(90deg, rgba(44,62,118,.95), rgba(16,23,50,.95)); box-shadow: inset 0 0 0 1px rgba(242,201,76,.35); }
 .prep-check { flex: none; width: 40px; padding: 3px 0; border-radius: 3px; text-align: center; font-size: 11px; font-weight: 800; color: #aab3c5; border: 1px solid rgba(170,179,197,.5); }
 .prep-card.on .prep-check { color: #2a1d00; background: linear-gradient(180deg, #fff1b8, #e3b24a); border-color: #d9b452; }
+/* 必ず出撃する隊長（外せない）：「必須」の札を赤みのある金に */
+.prep-card.required { cursor: default; }
+.prep-card.required .prep-check { color: #fff3cf; background: linear-gradient(180deg, #e0603c, #9a2a18); border-color: #f0a080; }
 .prep-art { flex: none; width: 44px; height: 44px; }
 .prep-art img { width: 100%; height: 100%; image-rendering: pixelated; }
 .prep-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
@@ -365,8 +368,13 @@ body { position: fixed; inset: 0; }
 .facing-arrow.right::after { transform: translate(-40%, -50%) rotate(90deg); }
 .facing-arrow.current { background: rgba(242,201,76,.35); box-shadow: inset 0 0 0 2px #ffd75a; }
 @keyframes facing-pulse { to { background-color: rgba(242,201,76,.28); } }
-/* 全体の図を開くボタン（大きいマップのときだけ、マップの右下に浮かべる） */
-#overview-button { position: absolute; right: 8px; bottom: 8px; z-index: 6; width: 52px; height: 52px; padding: 22px 0 0; border-radius: 10px;
+/* 騎士の向きの案内（ステージ7・11の最初の1回）：矢印を大きく光らせて、押す場所を分かりやすく */
+.facing-choice.assist .facing-arrow { z-index: 2; box-shadow: 0 0 0 2px #fff3b0, 0 0 14px 4px rgba(255,215,90,.85); animation: facing-assist .55s ease-in-out infinite alternate; }
+.facing-choice.assist .facing-arrow::after { border-bottom-color: #fff3b0; }
+@keyframes facing-assist { from { background-color: rgba(242,201,76,.25); } to { background-color: rgba(242,201,76,.6); box-shadow: 0 0 0 3px #fff, 0 0 20px 8px rgba(255,215,90,.95); } }
+/* 全体の図を開くボタン（大きいマップのときだけ出す） */
+/* 2026-10-22：マップの上に浮かべると部隊に重なるので、下のボタンの列（やり直すの右）に置く */
+#overview-button { flex: none; width: 54px; min-height: 48px; padding: 22px 0 0; border-radius: 10px;
   border: 1px solid #d9b452; color: #ffe39a; font-size: 12px; font-weight: 800; letter-spacing: .1em; text-indent: .1em;
   background: center 7px / 22px 18px no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 18'%3E%3Cpath d='M1 3 L7 1 L15 3 L21 1 V15 L15 17 L7 15 L1 17 Z' fill='none' stroke='%23ffe39a' stroke-width='1.6' stroke-linejoin='round'/%3E%3Cpath d='M7 1 V15 M15 3 V17' stroke='%23ffe39a' stroke-width='1.2'/%3E%3C/svg%3E"), rgba(14,20,40,.86);
   box-shadow: 0 3px 10px rgba(0,0,0,.5), inset 0 0 0 2px rgba(11,16,36,.9); }
@@ -384,6 +392,8 @@ body { position: fixed; inset: 0; }
 .overview-legend i.player { background: #3d7ef0; }
 .overview-legend i.enemy { background: #e0453a; border-radius: 2px; }
 .overview-legend i.king { background: transparent; border: 2px solid #ffd75a; }
+.overview-legend i.commander { width: 0; height: 0; border: 0; border-radius: 0; border-top: 5px solid transparent; border-bottom: 5px solid transparent; border-left: 10px solid #ffd75a; }
+.overview-legend i.gate { background: transparent; border: 2px solid #ff9d2e; border-radius: 1px; }
 .overview-legend i.view { background: transparent; border: 2px solid #fff; border-radius: 1px; }
 .overview-note { margin: 2px 0 10px; font-size: 12px; color: var(--text-dim); }
 #tiles { display: grid; }
@@ -406,6 +416,14 @@ body { position: fixed; inset: 0; }
 .tile.t-graveyard { background: #9a9f8a; }
 .tile.t-cathedral { background: #b9c49a; }
 .tile.t-wall { background: #a9cf86; }
+.tile.t-gate, .tile.t-gateBroken { background: #a9cf86; }
+/* 城門の体力のゲージ（マスの下） */
+.tile .gate-hp { position: absolute; z-index: 3; left: 4px; right: 4px; bottom: 3px; height: 5px; border-radius: 3px; background: rgba(0,0,0,.55); box-shadow: 0 0 0 1px rgba(255,255,255,.5); pointer-events: none; }
+.tile .gate-hp i { display: block; height: 100%; width: 100%; border-radius: 3px; background: linear-gradient(90deg, #ffb347, #ff6b3a); }
+.tile.gate-shake { animation: shake .36s ease-in-out; }
+/* 増援の予告（マップの左上に浮かべる） */
+#wave-notice { position: absolute; left: 8px; top: 8px; z-index: 6; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 800; pointer-events: none;
+  color: #fff3e0; background: linear-gradient(180deg, rgba(200,70,62,.95), rgba(138,37,32,.95)); box-shadow: 0 0 0 1px rgba(255,180,160,.6), 0 2px 6px rgba(0,0,0,.5); }
 .tile.t-castle { background: #cfc8b4; }
 /* 画像のマス：枠線を付けると絵が1px縮んでドットが乱れるので、枠線は上に重ねて描く */
 .tile.has-image { border: 0; background-size: 100% 100%; background-repeat: no-repeat; image-rendering: pixelated; }
@@ -498,6 +516,10 @@ body { position: fixed; inset: 0; }
 /* 構え中の印（右上の金の盾）。構えている部隊は、行動済みでも暗くしない（構えて待っていることが分かるように） */
 .unit .brace-mark { display: none; position: absolute; right: 0; top: 0; width: 15px; height: 15px; background: center / contain no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2 L21 5 V11.5 C21 17 17 20.5 12 22.5 C7 20.5 3 17 3 11.5 V5 Z' fill='%23f2c94c' stroke='%235a4300' stroke-width='1.6' stroke-linejoin='round'/%3E%3Cpath d='M12 6 V18' stroke='%235a4300' stroke-width='2'/%3E%3C/svg%3E"); filter: drop-shadow(0 1px 1px rgba(0,0,0,.8)); }
 .unit.braced .brace-mark { display: block; }
+/* 指揮官の旗（ステージ19から）：左上に小さな金の旗（敵の部隊なので、正規部隊の星とは重ならない） */
+.unit .commander-mark { position: absolute; left: 1px; top: 1px; width: 13px; height: 14px; z-index: 2; pointer-events: none;
+  background: center / contain no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 2 V23' stroke='%23332' stroke-width='2.4'/%3E%3Cpath d='M6 3 H21 L17 8 L21 13 H6 Z' fill='%23ffcf3a' stroke='%235a3a00' stroke-width='1.5' stroke-linejoin='round'/%3E%3C/svg%3E");
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,.8)); }
 /* ハイプリーストの祈りの守り+1：右側（構えの印の下）に白い盾 */
 .unit .bless-mark { display: none; position: absolute; right: 0; top: 15px; width: 14px; height: 14px; background: center / contain no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2 L21 5 V11.5 C21 17 17 20.5 12 22.5 C7 20.5 3 17 3 11.5 V5 Z' fill='%23eaf6ff' stroke='%232b5a8a' stroke-width='1.6' stroke-linejoin='round'/%3E%3Cpath d='M12 7 V17 M7 12 H17' stroke='%232b5a8a' stroke-width='2.2'/%3E%3C/svg%3E"); filter: drop-shadow(0 1px 1px rgba(0,0,0,.8)); }
 .unit.blessed-guard .bless-mark { display: block; }
@@ -588,11 +610,26 @@ body { position: fixed; inset: 0; }
 .command.choice .command-label { display: flex; flex-direction: column; align-items: center; line-height: 1.15; font-size: 15px; letter-spacing: .05em; }
 .command.choice .command-label i { font-style: normal; font-size: 12px; letter-spacing: 0; white-space: nowrap; }
 .command:active:not(:disabled) { transform: translateY(1px); filter: brightness(1.2); }
+/* 祈り・召喚の案内：押してほしいボタンを光らせる */
+.command.assist { animation: command-assist .6s ease-in-out infinite alternate; }
+@keyframes command-assist { from { box-shadow: 0 0 0 2px #fff3b0, 0 0 8px 2px rgba(255,215,90,.6); } to { box-shadow: 0 0 0 3px #fff, 0 0 18px 6px rgba(255,215,90,.95); } }
 .button.invisible { visibility: hidden; }
 #guide-line { flex: none; height: 26px; padding: 0 10px; font-size: 14px; line-height: 26px; color: var(--gold);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
 #action-bar { flex: none; display: flex; gap: 6px; padding: 0 6px 6px; }
 #action-bar .button { flex: 1; min-height: 48px; padding: 0 4px; }
+
+/* ステージの始めの説明（お話・新しい決まり・勝ち負け。2026-10-22） */
+#modal-body .briefing-story { margin: 0 0 12px; font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; font-size: 15px; color: #f4ead0; }
+#modal-body .briefing-rule { margin: 0 0 12px; padding: 8px 10px 10px; border-radius: 4px; border: 1px solid rgba(242,201,76,.45); border-left: 4px solid var(--gold);
+  background: rgba(242,201,76,.08); }
+#modal-body .briefing-rule h3 { margin: 0 0 4px; font-size: 15px; color: #ffe39a; }
+#modal-body .briefing-rule p { margin: 0; font-size: 14px; line-height: 1.65; color: #e9e2cc; }
+#modal-body .briefing-goal { display: grid; gap: 4px; }
+#modal-body .briefing-goal div { display: flex; gap: 8px; align-items: baseline; font-size: 14px; line-height: 1.5; }
+#modal-body .briefing-goal b { flex: none; padding: 1px 8px; border-radius: 3px; font-size: 12px; letter-spacing: .1em; }
+#modal-body .briefing-goal .win b { color: #10203f; background: #8fb8ff; }
+#modal-body .briefing-goal .lose b { color: #2a0d0d; background: #f08a80; }
 
 /* 町を占領した演出（マップの上）：旗竿が伸び、旗が上がり、光が広がる */
 .capture-raise { position: absolute; left: 0; top: 0; width: var(--tile); height: var(--tile); pointer-events: none; z-index: 4;
@@ -712,7 +749,7 @@ body { position: fixed; inset: 0; }
 /* 雇う画面（城の広間）：上に広間と側近、下に部隊の札 */
 #hire-scene { position: absolute; inset: 0; z-index: 26; display: flex; align-items: center; justify-content: center; padding: 10px;
   background: rgba(6,9,15,.88); }
-#hire-box { width: 100%; max-width: 420px; border-radius: 6px; overflow: hidden; border: 1px solid #d9b452;
+#hire-box { width: 100%; max-width: 420px; max-height: 100%; display: flex; flex-direction: column; border-radius: 6px; overflow: hidden; border: 1px solid #d9b452;
   background: linear-gradient(180deg, #1e2a52, #0b1024); box-shadow: inset 0 0 0 4px rgba(11,16,36,.9), inset 0 0 0 5px rgba(242,201,76,.4), 0 16px 36px rgba(0,0,0,.6);
   animation: stage-rise .25s ease-out; }
 #hire-stage { position: relative; aspect-ratio: 16 / 7; background: center bottom / cover no-repeat, linear-gradient(180deg, #4a3a2a 0%, #6b4f33 55%, #3a2c22 56%, #2a2019 100%);
@@ -727,7 +764,8 @@ body { position: fixed; inset: 0; }
 .hire-speech em { display: block; margin-top: 3px; font-style: normal; font-size: 12px; font-weight: 700; color: #8a5a14; }
 .hire-speech small { display: block; margin-top: 4px; font-family: -apple-system, "Hiragino Sans", sans-serif; font-size: 12px; font-weight: 700; color: #6e5112; }
 .hire-speech small b { font-size: 15px; color: #2a1d00; }
-#hire-list { display: flex; flex-direction: column; gap: 7px; padding: 10px 12px; }
+#hire-list { display: flex; flex-direction: column; gap: 7px; padding: 10px 12px; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+#hire-stage, .hire-cancel { flex: none; }
 .hire-card { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 62px; padding: 6px 10px; border-radius: 4px; text-align: left; cursor: pointer;
   border: 1px solid rgba(217,180,82,.6); color: #fff6dc; font: inherit; background: linear-gradient(90deg, rgba(44,62,118,.9), rgba(16,23,50,.92)); }
 .hire-card:active:not(:disabled) { transform: translateY(1px); filter: brightness(1.2); }
@@ -751,6 +789,15 @@ body { position: fixed; inset: 0; }
 #hire-box.compact .hire-desc { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #hire-box.compact .hire-cost { padding: 4px 8px; font-size: 16px; }
 #hire-box.compact .hire-cancel { margin-bottom: 10px; min-height: 40px; }
+/* 雇える部隊が9つ以上（ステージ19・20）：さらに詰める */
+#hire-box.dense #hire-stage { aspect-ratio: 16 / 5; }
+#hire-box.dense #hire-list { gap: 4px; padding: 6px 10px; }
+#hire-box.dense .hire-card { min-height: 40px; padding: 2px 8px; }
+#hire-box.dense .hire-art { width: 36px; height: 36px; }
+#hire-box.dense .hire-name { font-size: 15px; }
+#hire-box.dense .hire-desc { font-size: 10px; }
+#hire-box.dense .hire-cost { padding: 3px 7px; font-size: 15px; }
+#hire-box.dense .hire-speech { top: 8%; padding: 6px 10px; }
 .hire-cancel { display: block; margin: 0 auto 14px; min-height: 42px; padding: 0 28px; border-radius: 3px; border: 1px solid rgba(217,180,82,.45); cursor: pointer;
   background: transparent; color: #d8cfb4; font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; font-size: 15px; font-weight: 700; letter-spacing: .3em; text-indent: .3em; }
 
@@ -895,3 +942,46 @@ body { position: fixed; inset: 0; }
   .unit.ready .unit-body, .tile.target::after, .tile.ally::after, .stage-card.next, #modal.defeat #modal-title, .unit.blessed .unit-body, .title-button.primary, .title-tap, .unit .pips i.doomed { animation: none; }
   .confetti { display: none; }
 }
+
+/* キャラの会話（js/ui/talk-scene.js）：上に話す隊長たちの顔、下に会話の枠。話していない人は暗くする */
+#talk-scene { position: absolute; inset: 0; z-index: 27; display: flex; flex-direction: column; justify-content: flex-end; cursor: pointer;
+  background: linear-gradient(180deg, rgba(4,6,14,.72) 0%, rgba(4,6,14,.8) 45%, rgba(4,6,14,.94) 100%); animation: talk-in .35s ease-out both; }
+/* 会話の間は、上の帯・増援の予告・全体のボタンを隠す（スキップのボタンと重ならないように。2026-10-22） */
+#app.talking #top-bar, #app.talking #wave-notice, #app.talking #overview-button { visibility: hidden; }
+#talk-scene .talk-faces { display: flex; justify-content: center; align-items: flex-end; gap: 6px; padding: 0 12px; }
+#talk-scene .talk-face { width: 30%; max-width: 150px; transition: filter .25s, transform .25s; filter: brightness(.45) saturate(.6); transform: translateY(6px) scale(.94); }
+#talk-scene .talk-face.speaking { filter: drop-shadow(0 0 10px rgba(255,214,120,.55)); transform: none; }
+#talk-scene .talk-face img { display: block; width: 100%; height: auto; image-rendering: pixelated; }
+#talk-scene .talk-box { position: relative; margin: 0 10px 14px; min-height: 120px; padding: 12px 14px 16px; border-radius: 8px;
+  border: 1px solid rgba(217,180,82,.85); background: linear-gradient(180deg, rgba(20,26,44,.96), rgba(10,13,24,.96)); box-shadow: 0 0 18px rgba(0,0,0,.6); }
+#talk-scene .talk-name { display: inline-block; margin-bottom: 6px; padding: 2px 12px; border-radius: 4px; font-weight: 900; letter-spacing: .1em;
+  color: #1a1206; background: linear-gradient(180deg, #ffe39a, #d9a646); }
+#talk-scene .talk-text { margin: 0; font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; font-size: 16px; font-weight: 700; line-height: 1.7; color: #fff3cf; }
+#talk-scene .talk-next { position: absolute; right: 12px; bottom: 6px; font-size: 12px; color: #ffe39a; opacity: 0; }
+#talk-scene.line-done .talk-next { opacity: 1; animation: talk-blink .8s ease-in-out infinite alternate; }
+#talk-scene .talk-skip { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 10px); right: 10px; padding: 6px 12px; border-radius: 6px;
+  border: 1px solid rgba(230,220,192,.5); background: rgba(10,13,24,.7); color: #e6dcc0; font: inherit; font-size: 13px; font-weight: 700; }
+@keyframes talk-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes talk-blink { from { opacity: .3; } to { opacity: 1; } }
+
+/* エンディング（js/ui/ending-scene.js。2026-10-22）：タイトルの絵を暗くして、ゆっくり寄る。お話の文 → 題字と「おしまい」 */
+#ending-scene { position: absolute; inset: 0; z-index: 40; overflow: hidden; cursor: pointer; background: #05070d; animation: talk-in 1.2s ease-out both; }
+#ending-scene .ending-bg { position: absolute; inset: 0; background: center / cover no-repeat; animation: ending-zoom 40s linear both; }
+@keyframes ending-zoom { from { transform: scale(1.02); } to { transform: scale(1.14); } }
+#ending-scene .ending-shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(4,6,14,.55), rgba(4,6,14,.78) 45%, rgba(4,6,14,.88)); transition: background 1.5s; }
+#ending-scene.finale .ending-shade { background: linear-gradient(180deg, rgba(4,6,14,.25), rgba(4,6,14,.45) 50%, rgba(4,6,14,.85)); }
+#ending-scene .ending-story { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; gap: 22px; padding: 0 28px;
+  transition: opacity 1s; }
+#ending-scene.finale .ending-story { opacity: 0; }
+#ending-scene .ending-story p { margin: 0; font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; font-size: 17px; font-weight: 700; line-height: 2;
+  letter-spacing: .04em; color: #fff3cf; text-shadow: 0 2px 4px #000, 0 0 12px rgba(0,0,0,.9);
+  opacity: 0; transform: translateY(8px); transition: opacity 1.6s ease-out, transform 1.6s ease-out; }
+#ending-scene .ending-story p.shown { opacity: 1; transform: none; }
+#ending-scene .ending-finale { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  padding: 0 24px; text-align: center; opacity: 0; pointer-events: none; transition: opacity 1.8s ease-out; }
+#ending-scene.finale .ending-finale { opacity: 1; pointer-events: auto; }
+#ending-scene .ending-end { margin: 14px 0 0; font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; font-size: 24px; font-weight: 800; letter-spacing: .5em; text-indent: .5em;
+  color: #ffe39a; text-shadow: 0 2px 0 #3a2a00, 0 0 12px rgba(0,0,0,.9); }
+#ending-scene .ending-thanks { margin: 6px 0 26px; font-size: 14px; letter-spacing: .08em; color: #e6dcc0; text-shadow: 0 1px 3px #000, 0 0 8px #000; }
+#ending-scene .title-name { white-space: nowrap; font-size: clamp(30px, 10vw, 52px); }
+#ending-scene .title-button { width: min(100%, 300px); }

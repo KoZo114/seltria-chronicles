@@ -57,12 +57,13 @@
     }
   }
 
-  function showToast(text) {
+  // stay：自動では消さない（案内のように、操作が終わるまで出しておくとき）
+  function showToast(text, stay) {
     var toast = byId('toast');
     toast.textContent = text;
     toast.classList.remove('hidden');
     root.clearTimeout(toastTimer);
-    toastTimer = root.setTimeout(hideToast, 6000);
+    if (!stay) toastTimer = root.setTimeout(hideToast, 6000);
   }
 
   function hideToast() {

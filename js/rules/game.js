@@ -23,6 +23,10 @@
       return row.split('').map(function (symbol) { return SC.TERRAIN_SYMBOLS[symbol]; });
     });
     var blockOf = SC.Board.findBlocks(terrain);   // 2×2の建物（城・大聖堂）
+    // 城門の体力（ステージ18から）。守る軍は stage.gateSide（書いていなければ敵）。守る軍は城門を攻めない
+    var gates = {};
+    var gateHp = stage.gateHp || SC.GATE.hp;   // ステージごとに城門の体力を変えられる
+    terrain.forEach(function (row, y) { row.forEach(function (id, x) { if (id === 'gate') gates[x + ',' + y] = gateHp; }); });
     SC.Board.useState({ blockOf: blockOf });
     var units = stage.units.map(function (placement, index) {
       var at = SC.Board.canonical({ blockOf: blockOf }, placement.x, placement.y);   // 建物の中なら、建物の左上のマス
@@ -36,6 +40,7 @@
         role: placement.role || null,   // CPUの役目（'guard'：守備兵。決まったマスから動かず、構えて待つ）
         braced: false,                  // 構え中（次の自分のターンが始まるまで）
         facing: placement.side === 'enemy' ? 'down' : 'up',   // 向き（騎士だけが使う。斜め前の攻撃と反撃が、この向きで決まる）
+        commander: placement.commander || null,   // 指揮官（ステージ19から）：倒すと、その組（'north' など）の増援が止まる
         acted: false
       };
     });
@@ -56,7 +61,11 @@
       height: terrain.length,
       terrain: terrain,
       units: units,
+      commanderGroups: units.map(function (u) { return u.commander; }).filter(function (g, i, all) { return g && all.indexOf(g) === i; }),
       blockOf: blockOf,
+      gates: gates,
+      gateHp: gateHp,
+      gateSide: stage.gateSide || 'enemy',
       turn: 1,
       side: 'player',
       winner: null,
@@ -83,6 +92,7 @@
 
   function removeFallenUnits(state) {
     var fallen = state.units.filter(function (unit) { return unit.hp <= 0; });
+    var events = [];
     state.units = state.units.filter(function (unit) { return unit.hp > 0; });
     fallen.forEach(function (unit) {
       if (unit.regularId) {
@@ -92,7 +102,18 @@
       if (!state.fallenCount) state.fallenCount = { player: 0, enemy: 0 };
       state.fallenCount[unit.side] += 1;   // 全滅した部隊の数（勝敗の画面に出す）
       if (SC.UNIT_TYPES[unit.type].isKing && !state.winner) state.winner = otherSide(unit.side);
+      // 指揮官が倒れた：その組のほかの指揮官もいなければ、その組の増援は止まる
+      if (unit.commander && !isGroupActive(state, unit.commander)) events.push({ type: 'commander', group: unit.commander, side: unit.side });
     });
+    return events;
+  }
+
+  // 増援の組（'north' など）が、まだ来るか（その組の指揮官が1部隊でも残っていれば来る。指揮官のいない組は、いつも来る）
+  function isGroupActive(state, group) {
+    if (!group) return true;
+    var hadCommander = (state.commanderGroups || []).indexOf(group) >= 0;
+    if (!hadCommander) return true;
+    return state.units.some(function (unit) { return unit.commander === group && unit.hp > 0; });
   }
 
   // 行動できるユニットか、そのマスへ動けるかを確かめる。だめなら理由の文を、よければ null を返す
@@ -143,7 +164,7 @@
     if (target) {
       var strikes = SC.Combat.resolveAttack(state, unit, target);
       events = events.concat(strikes).concat(SC.Regulars.gainFromStrikes(state, strikes));   // 正規部隊の経験値とランクアップ
-      removeFallenUnits(state);
+      events = events.concat(removeFallenUnits(state));   // 指揮官が倒れたら、増援が止まった知らせ
     }
     unit.acted = true;
     unit.justHired = false;
@@ -177,6 +198,45 @@
       blessing: prayerData.defenseBuff || 0
     });
     events = events.concat(SC.Regulars.gainFromPrayer(state, unit, forecast.restored));   // 回復役の正規部隊は祈りで育つ
+    unit.acted = true;
+    unit.justHired = false;
+    return { ok: true, events: events };
+  }
+
+  // ---- 城門（ステージ18から） ----
+  // 城門への攻撃：兵士1人ごとに「攻撃 − 城門の守り」（最低1）。大型は2倍。城門は反撃しない。体力が0になると壊れた城門になる
+  function getGateDamage(unit) {
+    var type = SC.UNIT_TYPES[unit.type];
+    var perSoldier = Math.max(1, type.attack - SC.GATE.defense);
+    return SC.Combat.getSoldierCount(unit) * perSoldier * (type.family === 'large' ? SC.GATE.largeMultiplier : 1);
+  }
+
+  // その部隊が、destination から攻撃できる城門の一覧（{ x, y, hp }）
+  function getGateTargets(state, unit, destination) {
+    if (!state.gates || unit.side === state.gateSide) return [];
+    return Object.keys(state.gates).map(function (key) {
+      var parts = key.split(',');
+      return { x: Number(parts[0]), y: Number(parts[1]), hp: state.gates[key] };
+    }).filter(function (gate) { return SC.Movement.isInAttackRange(unit.type, destination, gate); });
+  }
+
+  function attackGate(state, unitId, destination, gatePos) {
+    var unit = SC.Board.getUnitById(state, unitId);
+    var error = checkMove(state, unit, destination);
+    if (error) return { ok: false, error: error };
+    var key = gatePos.x + ',' + gatePos.y;
+    if (!state.gates || state.gates[key] === undefined) return { ok: false, error: '城門がありません' };
+    if (!getGateTargets(state, unit, destination).some(function (g) { return g.x === gatePos.x && g.y === gatePos.y; })) return { ok: false, error: '城門に届きません' };
+    var events = [];
+    moveUnit(unit, destination, events);
+    var damage = Math.min(state.gates[key], getGateDamage(unit));
+    state.gates[key] -= damage;
+    var broken = state.gates[key] <= 0;
+    if (broken) {
+      delete state.gates[key];
+      state.terrain[gatePos.y][gatePos.x] = 'gateBroken';
+    }
+    events.push({ type: 'gate', unitId: unit.id, x: gatePos.x, y: gatePos.y, damage: damage, hpAfter: broken ? 0 : state.gates[key], broken: broken });
     unit.acted = true;
     unit.justHired = false;
     return { ok: true, events: events };
@@ -286,6 +346,7 @@
     if (action.kind === 'brace') return brace(state, action.unitId);
     if (action.kind === 'hire') return SC.Economy.hire(state, action.unitId, action.unitType, { x: action.x, y: action.y });
     if (action.kind === 'pray') return pray(state, action.unitId, destination, action.targetId);
+    if (action.kind === 'gate') return attackGate(state, action.unitId, destination, { x: action.gateX, y: action.gateY });
     if (action.kind === 'summon') return summonUnit(state, action.unitId, action.unitType, destination);
     return act(state, action.unitId, destination, action.targetId, action.facing);
   }
@@ -315,6 +376,7 @@
     (state.reinforcements || []).forEach(function (wave) {
       if (wave.arrived || wave.turn !== state.turn || (wave.side || 'enemy') !== side) return;
       wave.arrived = true;
+      if (!isGroupActive(state, wave.group)) return;   // 指揮官が倒れた組の増援は来ない
       var unitIds = [];
       wave.units.forEach(function (placement) {
         var tile = findFreeTile(state, placement.x, placement.y, SC.UNIT_TYPES[placement.type].moveType);
@@ -334,8 +396,11 @@
   }
 
   // まだ来ていない、次の増援（無ければ null）
-  function getNextReinforcement(state) {
-    var waves = (state.reinforcements || []).filter(function (wave) { return !wave.arrived; });
+  // group を渡すと、その組の次の増援。指揮官が倒れて止まった組は数えない
+  function getNextReinforcement(state, group) {
+    var waves = (state.reinforcements || []).filter(function (wave) {
+      return !wave.arrived && isGroupActive(state, wave.group) && (group === undefined || wave.group === group);
+    });
     waves.sort(function (a, b) { return a.turn - b.turn; });
     return waves[0] || null;
   }
@@ -398,6 +463,10 @@
     getSummonOdds: getSummonOdds,
     summonUnit: summonUnit,
     getNextReinforcement: getNextReinforcement,
-    getHazardDamage: getHazardDamage
+    getHazardDamage: getHazardDamage,
+    getGateDamage: getGateDamage,
+    isGroupActive: isGroupActive,
+    getGateTargets: getGateTargets,
+    attackGate: attackGate
   };
 })(typeof window !== 'undefined' ? window : globalThis);

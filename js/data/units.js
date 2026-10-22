@@ -11,6 +11,13 @@
       escortType: 'guard',   // 戦闘シーンでは、1人目がキング本人、残りは近衛兵の絵で見せる（見た目だけ。能力は全員同じ）
       description: '倒されたら負け。人数は少ないが1人が強い。城にいると硬い。'
     },
+    // 覇王ヴァルガス（ステージ20のボス。敵国の王。2026-10-21 ユーザー決定）：今の王よりワンランク強い。倒されたら負けになる王の扱いは同じ
+    kingBoss: {
+      name: '覇王ヴァルガス', size: 3, soldierHp: 14, attack: 6, defense: 1, move: 2,
+      rangeMin: 1, rangeMax: 1, moveType: 'ground', isKing: true, family: 'king',
+      escortType: 'guard',
+      description: '敵国の王。騎士あがりの覇王で、今までの王より強い。倒せば勝ち。城にいると硬い。'
+    },
     infantry: {
       name: '歩兵', size: 6, soldierHp: 6, attack: 3, defense: 0, move: 3,
       rangeMin: 1, rangeMax: 1, moveType: 'ground', isKing: false, family: 'spear',
@@ -139,6 +146,23 @@
       defenseVsFlying: 2,
       description: 'ナイトのランクアップ。地上からの攻撃はほとんど効かない最強の壁。空からの攻撃には少し弱い。'
     },
+    // 重装兵長（ステージ18から。雇える傭兵のジェネラル。2026-10-19 ユーザーの希望）：正規部隊のジェネラルより守りが1低く、値段が高い。育たない
+    heavyGuard: {
+      name: '重装兵長', size: 6, soldierHp: 8, attack: 4, defense: 3, move: 4,
+      rangeMin: 1, rangeMax: 1, moveType: 'ground', isKing: false, family: 'spear',
+      canBrace: true, capturesTowns: true,
+      defenseVsFlying: 2,
+      cost: 150,
+      description: '雇える重い鎧の兵。地上からの攻撃に強い壁。空からの攻撃には少し弱い。'
+    },
+    // 竜騎兵（ステージ19から。雇える傭兵のドラゴンナイト。2026-10-19 ユーザーの希望）：正規部隊のドラゴンナイトより少し弱く、値段が高い。育たない
+    dragoon: {
+      name: '竜騎兵', size: 3, soldierHp: 13, attack: 7, defense: 2, move: 5,
+      rangeMin: 1, rangeMax: 1, moveType: 'ignoreTerrain', isKing: false, family: 'flying',
+      bonusAgainst: { large: 2 },
+      cost: 180,
+      description: '雇える竜の騎兵。地形を気にせず進み、ドラゴンなど大型に強い。弓には弱い。'
+    },
     // ドラゴンナイト（騎士の上。40点で上がる）：竜に乗る。地形無視で、湖も越える。弓には弱いが、ほかにはほぼ勝てる。ドラゴンに特に強い
     dragonKnight: {
       name: 'ドラゴンナイト', size: 3, soldierHp: 14, attack: 8, defense: 2, move: 5,
@@ -169,6 +193,9 @@
       description: '空を飛ぶ重装隊。ハーピーより遅いが強い。弓兵に弱い。'
     }
   };
+
+  // 城門（ステージ18から）：体力、守り（兵士1人の打撃から引く）、大型（ゴーレム・ドラゴン）の倍率
+  SC.GATE = { hp: 60, defense: 2, largeMultiplier: 2 };
 
   SC.COMBAT = {
     missPercent: 2,   // 兵士1人ごとのミスの確率（身のこなしが「ふつう」の相手。相性のあるステージでは、下の身のこなしで変わる）
