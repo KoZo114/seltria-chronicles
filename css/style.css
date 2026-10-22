@@ -985,3 +985,13 @@ body { position: fixed; inset: 0; }
 #ending-scene .ending-thanks { margin: 6px 0 26px; font-size: 14px; letter-spacing: .08em; color: #e6dcc0; text-shadow: 0 1px 3px #000, 0 0 8px #000; }
 #ending-scene .title-name { white-space: nowrap; font-size: clamp(30px, 10vw, 52px); }
 #ending-scene .title-button { width: min(100%, 300px); }
+
+/* 攻撃の届く形の小さな図（情報欄と雇う画面。2026-10-22）：まん中が部隊（金）、赤が届くマス、うすい赤は「動かなければ届く」 */
+.hire-card .attack-shape { margin-left: auto; }
+.hire-card .hire-cost { min-width: 64px; text-align: center; }
+.attack-shape { flex: none; display: grid; grid-template-columns: repeat(var(--shape-size), 1fr); gap: 1px; width: calc(var(--shape-size) * 6px + (var(--shape-size) - 1) * 1px);
+  padding: 2px; border-radius: 3px; background: rgba(0,0,0,.35); }
+.attack-shape i { display: block; aspect-ratio: 1; border-radius: 1px; background: rgba(255,255,255,.1); }
+.attack-shape i.self { background: #f2c94c; }
+.attack-shape i.hit { background: #ef5a50; }
+.attack-shape i.still { background: rgba(239,90,80,.35); box-shadow: inset 0 0 0 1px rgba(239,90,80,.8); }

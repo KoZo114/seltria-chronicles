@@ -16,7 +16,8 @@
       name: '覇王ヴァルガス', size: 3, soldierHp: 14, attack: 6, defense: 1, move: 2,
       rangeMin: 1, rangeMax: 1, moveType: 'ground', isKing: true, family: 'king',
       escortType: 'guard',
-      description: '敵国の王。騎士あがりの覇王で、今までの王より強い。倒せば勝ち。城にいると硬い。'
+      allDirections: true,   // まわり8マスに攻撃・反撃が届く（2026-10-22）
+      description: '敵国の王。騎士あがりの覇王で、今までの王より強い。斜めも含めたまわり8マスに届く。倒せば勝ち。城にいると硬い。'
     },
     infantry: {
       name: '歩兵', size: 6, soldierHp: 6, attack: 3, defense: 0, move: 3,
@@ -46,7 +47,8 @@
       name: 'ナイト', size: 6, soldierHp: 7, attack: 3, defense: 2, move: 2,
       rangeMin: 1, rangeMax: 1, moveType: 'ground', isKing: false, family: 'spear',
       canBrace: true, capturesTowns: true,
-      description: '歩兵のランクアップ。足は遅いが、守りが最強の壁役。構えられ、町と砦を占領できる。'
+      lance: true, lanceStillOnly: true,   // 槍：動かずに突くときだけ、まっすぐ2マス先にも届く（2026-10-22。動いても届くと強すぎた）
+      description: '足は遅いが、守りが固い壁役。動かずに突けば、槍はまっすぐ2マス先にも届く。構えられ、町と砦を占領できる。'
     },
     // プリースト（ステージ11から。僧侶のランクアップ。正規部隊だけがなれる）：祈りで戻せる人数が増える
     priest: {
@@ -122,7 +124,7 @@
     },
     // スケルトン（ステージ12から）：召喚で現れる不死の兵。補充や祈りでは戻らず、町も占領できない。回復系に弱い
     skeleton: {
-      name: 'スケルトン', size: 6, soldierHp: 4, attack: 2, defense: 0, move: 3,
+      name: 'スケルトン', size: 6, soldierHp: 4, attack: 2, defense: 0, move: 2,   // 移動は2（2026-10-22 ユーザーの希望。前は3）
       rangeMin: 1, rangeMax: 1, moveType: 'ground', isKing: false, family: 'undead',
       noRestore: true,
       description: '召喚で現れる不死の兵。補充や祈りでは戻らない。僧侶に弱い。'
@@ -134,7 +136,8 @@
       rangeMin: 2, rangeMax: 2, moveType: 'woodland', isKing: false, family: 'bow',
       bonusAgainst: { flying: 1 },
       terrainDefenseBonus: { forest: 1 },
-      description: '弓兵のランクアップ。森を自在に動き、森では守りが固い。飛行にとても強い。'
+      stillRangeBonus: 1,   // 長弓：動かずに撃つとき（と反撃）は、1マス遠くまで届く（2026-10-22）
+      description: '弓兵のランクアップ。動かずに撃つと3マス先まで届く。森を自在に動き、森では守りが固い。飛行にとても強い。'
     },
     // ---- 正規部隊だけがなれる、3段目のクラス（2026-10-19 ユーザー決定） ----
     // ジェネラル（ナイトの上）：最強の壁。地上からの攻撃はほとんど効かないが、空からの攻撃には守りが2下がる。移動4
@@ -144,7 +147,8 @@
       rangeMin: 1, rangeMax: 1, moveType: 'ground', isKing: false, family: 'spear',
       canBrace: true, capturesTowns: true,
       defenseVsFlying: 2,
-      description: 'ナイトのランクアップ。地上からの攻撃はほとんど効かない最強の壁。空からの攻撃には少し弱い。'
+      allDirections: true,   // まわり8マスに攻撃・反撃が届く（2026-10-22）
+      description: 'ナイトのランクアップ。地上からの攻撃はほとんど効かない最強の壁。斜めも含めたまわり8マスに届く。空からの攻撃には少し弱い。'
     },
     // 重装兵長（ステージ18から。雇える傭兵のジェネラル。2026-10-19 ユーザーの希望）：正規部隊のジェネラルより守りが1低く、値段が高い。育たない
     heavyGuard: {
@@ -153,7 +157,8 @@
       canBrace: true, capturesTowns: true,
       defenseVsFlying: 2,
       cost: 150,
-      description: '雇える重い鎧の兵。地上からの攻撃に強い壁。空からの攻撃には少し弱い。'
+      allDirections: true,   // まわり8マスに攻撃・反撃が届く（2026-10-22）
+      description: '雇える重い鎧の兵。地上からの攻撃に強い壁。斜めも含めたまわり8マスに届く。空からの攻撃には少し弱い。'
     },
     // 竜騎兵（ステージ19から。雇える傭兵のドラゴンナイト。2026-10-19 ユーザーの希望）：正規部隊のドラゴンナイトより少し弱く、値段が高い。育たない
     dragoon: {
@@ -176,7 +181,8 @@
       rangeMin: 1, rangeMax: 2, moveType: 'elven', isKing: false, family: 'bow',
       bonusAgainst: { flying: 2 },
       terrainDefenseBonus: { forest: 1 },
-      description: 'エルフのランクアップ。森も湖も進み、隣にも2マス先にも撃てる。飛行にとても強い。'
+      stillRangeBonus: 1,   // 長弓：動かずに撃つとき（と反撃）は、3マス先まで届く（2026-10-22）
+      description: 'エルフのランクアップ。森も湖も進み、隣にも2マス先にも撃てる。動かずに撃つと3マス先まで届く。飛行にとても強い。'
     },
     // ワイバーン（ステージ13から）：いちばん速く飛ぶ竜。グリフォンより少し強い
     wyvern: {

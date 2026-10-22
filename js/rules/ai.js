@@ -81,7 +81,7 @@
     units.forEach(function (unit) {
       getDestinations(state, unit).forEach(function (destination) {
         enemies.forEach(function (target) {
-          if (!SC.Movement.isInAttackRange(unit.type, destination, target)) return;
+          if (!SC.Movement.canAttackFrom(unit, destination, target)) return;
           if (isHealer(unit) && hasFighters(state, unit.side) && !SC.Combat.getForecast(state, unit, destination, target).canKill) return;
           var score = scoreAttack(state, unit, destination, target) - destination.cost * 0.01;
           if (!best || score > best.score) {
@@ -205,7 +205,7 @@
 
   // 占領しに行く町（と砦）：自軍のものでない町・砦のうち、歩いていちばん近いもの。王は占領に出さない（城に残す）
   function findTownToCapture(state, unit, fromUnit) {
-    if (!SC.Economy.isEnabled(state) || !SC.UNIT_TYPES[unit.type].capturesTowns) return null;
+    if (!SC.Economy.isEnabled(state) || !SC.Economy.capturesTowns(unit)) return null;
     var best = null;
     Object.keys(state.owners).forEach(function (k) {
       var parts = k.split(','), x = Number(parts[0]), y = Number(parts[1]);

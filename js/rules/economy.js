@@ -61,12 +61,19 @@
     return income;
   }
 
+  // その部隊が町を占領できるか：歩兵の系統と、アルド・ガイル・ブランの隊（どのクラスになっても。2026-10-22 ユーザーの希望）
+  function capturesTowns(unit) {
+    if (SC.UNIT_TYPES[unit.type].capturesTowns) return true;
+    if (!unit.regularId || !SC.REGULARS) return false;
+    return SC.REGULARS.some(function (regular) { return regular.id === unit.regularId && regular.capturesTowns; });
+  }
+
   // その部隊が、その地形を占領できるか。町は歩兵だけ、砦は歩兵と王（2026-10-18 ユーザー決定）
   function canCapture(unit, terrainId) {
     var type = SC.UNIT_TYPES[unit.type];
     terrainId = SC.terrainKind(terrainId);
-    if (terrainId === 'town') return !!type.capturesTowns;
-    if (terrainId === 'fort') return !!type.capturesTowns || !!type.isKing;
+    if (terrainId === 'town') return capturesTowns(unit);
+    if (terrainId === 'fort') return capturesTowns(unit) || !!type.isKing;
     return false;
   }
 
@@ -191,6 +198,7 @@
 
   SC.Economy = {
     canCapture: canCapture,
+    capturesTowns: capturesTowns,
     isBase: isBase,
     isHireBase: isHireBase,
     getHireTypes: getHireTypes,

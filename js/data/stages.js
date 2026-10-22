@@ -706,7 +706,7 @@
       ruleNote: '新しい決まり：騎馬隊と、6つ目の正規部隊\n敵は騎士が中心で、増援の騎士が横からも駆けてきます。騎士は足が速く、斜めからも攻めてきます。槍（歩兵・ナイト・ジェネラル）は騎兵に強く（相性+2）、構えれば、近づいてきた騎士より先に突けます。正規部隊にブラン隊（騎士）が加わりました。経験値が40たまるとドラゴンナイトになります。',
       goalText: '勝利：敵の王を倒す\n敗北：自軍の王が倒される',
       defeatHint: '騎士は、歩兵やナイトを前に並べて構えれば止められます。弓兵・魔法使い・僧侶は騎士に弱いので、槍の後ろに置こう。こちらの騎士は、待機するときに敵のほうを向けて、背中を取られないように。',
-      rules: { zoneOfControl: true, economy: true, affinity: true, experience: true, maxUnits: 10, incomeScale: { enemy: 0.5 }, hireTypes: ['infantry', 'archer', 'cleric', 'cavalry', 'harpy', 'griffin', 'wyvern', 'mage'] },
+      rules: { zoneOfControl: true, economy: true, affinity: true, experience: true, maxUnits: 10, incomeScale: { enemy: 0.75 }, hireTypes: ['infantry', 'archer', 'cleric', 'cavalry', 'harpy', 'griffin', 'wyvern', 'mage'] },   // 敵の収入 0.5→0.75（2026-10-22 攻撃の形を増やしたあと、自動対戦で調整）
       gold: { player: 60, enemy: 40 },
       music: 'map',
       battleMusic: null,
@@ -768,7 +768,7 @@
       ruleNote: '新しい決まり：沼と藪、ドラゴン\n沼と藪は進みにくく、ターンの始めにその上にいると、最大体力の1割のダメージを受けます（藪は受ける打撃が1減ります）。空を飛ぶ部隊は受けません。ドラゴンは地形を気にせず進み、斜めも含めた隣の8マスに攻撃してきます。魔法（相性+2）とドラゴンナイトに弱い強敵です。',
       goalText: '勝利：敵の王を倒す\n敗北：自軍の王が倒される',
       defeatHint: 'ドラゴンは魔法とドラゴンナイトに弱いです。歩兵で囲んで止め、魔法使いで攻めよう。沼と藪の上で止まると体力が減るので、道の上で待とう。空を飛ぶ部隊は、沼と藪のダメージを受けません。',
-      rules: { zoneOfControl: true, economy: true, affinity: true, experience: true, maxUnits: 10, incomeScale: { enemy: 0.5 }, hireTypes: ['infantry', 'archer', 'cleric', 'cavalry', 'harpy', 'griffin', 'wyvern', 'mage'] },
+      rules: { zoneOfControl: true, economy: true, affinity: true, experience: true, maxUnits: 10, incomeScale: { enemy: 0.9 }, hireTypes: ['infantry', 'archer', 'cleric', 'cavalry', 'harpy', 'griffin', 'wyvern', 'mage'] },   // 敵の収入 0.5→0.9（2026-10-22 攻撃の形を増やしたあと、自動対戦で調整）
       gold: { player: 60, enemy: 40 },
       music: 'map',
       battleMusic: null,
@@ -821,8 +821,8 @@
       ruleNote: '新しい決まり：ハイプリーストとサーガ、墓地と大聖堂\nセラ隊は経験値が満タンになるとハイプリーストに、ノエル隊はサーガになります。ハイプリーストは動かずに祈ると6人隊を全員戻し、守りも1上げます。サーガの召喚は必ず成功します。墓地は藪と同じく、止まると体力が減ります（不死のスケルトンは平気）。大聖堂は砦と同じく、占領すると毎ターン20G入り、王がいれば雇えます。回復の系統は不死に強い（相性+2）。',
       goalText: '勝利：敵の王を倒す\n敗北：自軍の王が倒される',
       defeatHint: 'スケルトンを呼ぶ敵のウィザードと魔法使いを、先に倒そう。騎士は魔法使いに強く、空の部隊なら水路を越えられます。僧侶とプリーストは、スケルトンに強いです。墓地の上で止まると体力が減ります。',
-      rules: { zoneOfControl: true, economy: true, affinity: true, experience: true, maxUnits: 10, incomeScale: { enemy: 0.5 }, hireTypes: ['infantry', 'archer', 'cleric', 'cavalry', 'harpy', 'griffin', 'wyvern', 'mage'] },
-      gold: { player: 60, enemy: 40 },
+      rules: { zoneOfControl: true, economy: true, affinity: true, experience: true, maxUnits: 10, incomeScale: { enemy: 0.75 }, hireTypes: ['infantry', 'archer', 'cleric', 'cavalry', 'harpy', 'griffin', 'wyvern', 'mage'] },   // 敵の収入 0.5→0.75（2026-10-22 攻撃の形を増やしたあと、自動対戦で調整）
+      gold: { player: 60, enemy: 130 },   // 敵の初期G 40→130（2026-10-22 攻撃の形を増やしたあと、自動対戦で調整）
       music: 'map',
       battleMusic: null,
       bossMusic: 'boss',
@@ -1003,6 +1003,9 @@
         { type: 'heavyGuard', side: 'enemy', x: 6, y: 1, role: 'guard' },
         { type: 'heavyGuard', side: 'enemy', x: 9, y: 1, role: 'guard' },
         { type: 'heavyGuard', side: 'enemy', x: 8, y: 3, commander: 'north' },   // 北の指揮官
+        // 湖の2つの渡り口の守り（2026-10-22 攻撃の形を増やしたあと、自動対戦で調整。北の王へすぐ届いてしまうため）
+        { type: 'heavyGuard', side: 'enemy', x: 4, y: 3, role: 'guard' },
+        { type: 'heavyGuard', side: 'enemy', x: 11, y: 3, role: 'guard' },
         { type: 'cavalry', side: 'enemy', x: 5, y: 3 },
         { type: 'wizard', side: 'enemy', x: 8, y: 2 },
         // 南（砦の軍）
@@ -1037,7 +1040,7 @@
       ],
       defeatHint: '一度に全部を攻めず、外の城門 → 城下町の砦 → 内の城門と、足場を作りながら進もう。指揮官を倒すと増援が止まって楽になります。ドラゴンとワイバーンには弓、ゴーレムやドラゴンで城門を叩くと早く壊せます。',
       requiredRegulars: ['aldo'],   // アルド隊は必ず出撃（会話で最初に話すため）
-      rules: { zoneOfControl: true, economy: true, affinity: true, experience: true, maxUnits: 10, waveNotice: true, incomeScale: { enemy: 0.25 },
+      rules: { zoneOfControl: true, economy: true, affinity: true, experience: true, maxUnits: 10, waveNotice: true, incomeScale: { enemy: 0.45 },   // 0.25→0.45（2026-10-22 攻撃の形を増やしたあと、自動対戦で調整）
         hireTypes: ['infantry', 'archer', 'cleric', 'cavalry', 'harpy', 'griffin', 'wyvern', 'mage', 'heavyGuard', 'dragoon'] },
       gold: { player: 150, enemy: 60 },
       music: 'map',

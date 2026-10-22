@@ -70,6 +70,7 @@
         '<span class="hire-text"><span class="hire-name">' + type.name + '<small>' + type.size + '人</small></span>' +
         '<span class="hire-desc">' + (DESCRIPTIONS[choice.typeId] || type.description) + '</span>' +
         (choice.enabled ? '' : '<span class="hire-note">' + choice.note + '</span>') + '</span>' +
+        SC.Render.attackShapeHtml(choice.typeId) +   // 攻撃の届く形（2026-10-22）
         '<span class="hire-cost">' + type.cost + '<small>G</small></span></button>';
     }).join('');
     scene.innerHTML =

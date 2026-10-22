@@ -204,38 +204,61 @@
     return dx < 0 ? 'left' : 'right';
   }
 
+  // まっすぐ n マス先か（建物は4マスのどれかから数える）。槍（lance）が使う
+  function isStraightAt(a, b, n) {
+    var found = false;
+    footprint(a).forEach(function (p) {
+      footprint(b).forEach(function (q) {
+        var dx = Math.abs(q.x - p.x), dy = Math.abs(q.y - p.y);
+        if ((dx === 0 && dy === n) || (dy === 0 && dx === n)) found = true;
+      });
+    });
+    return found && distance(a, b) === n;
+  }
+
   // 攻撃が届くか。距離（上下左右に数えたマス数）が射程の中なら届く。
-  // 斜め前も攻撃できる部隊（diagonalFront）は、すぐ斜めの相手にも届く。ドラゴン（allDirections）は、斜め4つすべてに届く。
+  // 斜め前も攻撃できる部隊（diagonalFront）は、すぐ斜めの相手にも届く。まわり8マスの部隊（allDirections：ドラゴン・ジェネラルなど）は、斜め4つすべてに届く。
+  // 槍（lance：ナイト）は、まっすぐ2マス先にも届く（間に部隊がいても届く）。lanceStillOnly なら、動かずに突くときと反撃のときだけ。
+  // 長弓（stillRangeBonus：エルフ・ハイエルフ）は、動かずに撃つとき（still）と反撃のとき、そのマス数だけ遠くまで届く（2026-10-22）。
   // facing を渡すと、その向きの斜め前だけに届く（守るときの反撃）。渡さなければ、どの斜めにも届く（攻めるときは相手のほうを向けるため）
-  function isInAttackRange(unitTypeId, fromPos, targetPos, facing) {
+  function isInAttackRange(unitTypeId, fromPos, targetPos, facing, still) {
     var unitType = SC.UNIT_TYPES[unitTypeId];
     var d = distance(fromPos, targetPos);
-    if (d >= unitType.rangeMin && d <= unitType.rangeMax) return true;
+    var rangeMax = unitType.rangeMax + (still && unitType.stillRangeBonus ? unitType.stillRangeBonus : 0);
+    if (d >= unitType.rangeMin && d <= rangeMax) return true;
+    if (unitType.lance && (!unitType.lanceStillOnly || still) && d === 2 && isStraightAt(fromPos, targetPos, 2)) return true;   // lanceStillOnly：動かないときだけ2マス先
     if (!unitType.diagonalFront && !unitType.allDirections) return false;
     var step = diagonalStep(fromPos, targetPos);
     if (!step || d < 2) return false;
     var dx = step.dx, dy = step.dy;
-    if (unitType.allDirections) return true;   // ドラゴン：斜め4つにも、向きに関係なく届く
+    if (unitType.allDirections) return true;   // まわり8マス：斜め4つにも、向きに関係なく届く
     if (!facing) return true;
     var vector = FACING_VECTORS[facing];
     return dx * vector[0] + dy * vector[1] > 0;   // 向いている側の斜めだけ
   }
 
-  // 守る側が、attackerPos から攻めてきた相手に反撃できるか（守る側の向きで決まる）
-  function canCounter(defender, attackerPos) {
-    return isInAttackRange(defender.type, defender, attackerPos, getFacing(defender));
+  // unit が fromPos から targetPos を攻撃できるか（動かずに撃つかどうかを、unit のいまの位置から決める）
+  function canAttackFrom(unit, fromPos, targetPos) {
+    return isInAttackRange(unit.type, fromPos, targetPos, undefined, isSamePlace(unit, fromPos));
   }
 
-  // fromPos から攻撃が届くマスの一覧（facing を渡さなければ、向きを選べるものとして数える）
-  function getAttackTiles(state, unitTypeId, fromPos, facing) {
+  function isSamePlace(a, b) { return a.x === b.x && a.y === b.y; }
+
+  // 守る側が、attackerPos から攻めてきた相手に反撃できるか（守る側の向きで決まる。守る側は動いていないので、長弓は遠くまで届く）
+  function canCounter(defender, attackerPos) {
+    return isInAttackRange(defender.type, defender, attackerPos, getFacing(defender), true);
+  }
+
+  // fromPos から攻撃が届くマスの一覧（facing を渡さなければ、向きを選べるものとして数える。still：動かずに撃つ）
+  function getAttackTiles(state, unitTypeId, fromPos, facing, still) {
     useState(state);
     var unitType = SC.UNIT_TYPES[unitTypeId];
     var tiles = [];
-    var reach = unitType.rangeMax + 1;   // 建物から攻めるときは、建物の大きさの分だけ広く調べる
+    var reach = Math.max(unitType.rangeMax + (unitType.stillRangeBonus || 0), unitType.lance ? 2 : 0) + 1;   // 建物から攻めるときは、建物の大きさの分だけ広く調べる
     for (var dy = -reach; dy <= reach + 1; dy++) {
       for (var dx = -reach; dx <= reach + 1; dx++) {
         var pos = { x: fromPos.x + dx, y: fromPos.y + dy };
-        if (inBounds(state, pos.x, pos.y) && isInAttackRange(unitTypeId, fromPos, pos, facing)) tiles.push(pos);
+        if (inBounds(state, pos.x, pos.y) && isInAttackRange(unitTypeId, fromPos, pos, facing, still)) tiles.push(pos);
       }
     }
     return tiles;
@@ -260,6 +283,8 @@
     isInEnemyZone: isInEnemyZone,
     getReachableTiles: getReachableTiles,
     isInAttackRange: isInAttackRange,
+    canAttackFrom: canAttackFrom,
+    isSamePlace: isSamePlace,
     canCounter: canCounter,
     getFacing: getFacing,
     facingToward: facingToward,

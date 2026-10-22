@@ -165,6 +165,30 @@
   };
 
   // 自軍：丸い台座で上向きの印。敵軍：四角い台座で下向きの印。色が分からなくても形で見分けられる。
+  // 攻撃の届く形の小さな図（情報欄と雇う画面。2026-10-22）。まん中が部隊、赤が届くマス、うすい赤が「動かなければ届く」マス。
+  // 騎士（斜め前）は上を向いているものとして描く。ルールの計算は js/rules/movement.js の isInAttackRange と同じ考え方
+  function attackShapeHtml(unitTypeId) {
+    var type = SC.UNIT_TYPES[unitTypeId];
+    var still = type.stillRangeBonus || 0;
+    var reach = Math.max(1, type.rangeMax + still, type.lance ? 2 : 0);
+    var size = Math.max(5, reach * 2 + 1);
+    var half = (size - 1) / 2;
+    var cells = '';
+    for (var y = -half; y <= half; y++) {
+      for (var x = -half; x <= half; x++) {
+        var d = Math.abs(x) + Math.abs(y);
+        var kind = '';
+        if (d === 0) kind = 'self';
+        else if (d >= type.rangeMin && d <= type.rangeMax) kind = 'hit';
+        else if (type.lance && d === 2 && (x === 0 || y === 0)) kind = type.lanceStillOnly ? 'still' : 'hit';
+        else if (Math.abs(x) === 1 && Math.abs(y) === 1 && (type.allDirections || (type.diagonalFront && y < 0))) kind = 'hit';
+        else if (still && d >= type.rangeMin && d <= type.rangeMax + still) kind = 'still';
+        cells += '<i' + (kind ? ' class="' + kind + '"' : '') + '></i>';
+      }
+    }
+    return '<span class="attack-shape" style="--shape-size:' + size + '" aria-hidden="true">' + cells + '</span>';
+  }
+
   function createUnitSvg(unitTypeId, side) {
     var base = side === 'player'
       ? '<path class="pointer" d="M24 1 L31 11 L17 11 Z"/><circle class="base" cx="24" cy="26" r="18"/>'
@@ -762,6 +786,7 @@
   }
 
   SC.Render = {
+    attackShapeHtml: attackShapeHtml,
     animateGate: animateGate,
     syncGates: syncGates,
     init: init,

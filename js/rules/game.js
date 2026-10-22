@@ -147,7 +147,7 @@
     if (targetId !== null && targetId !== undefined) {
       target = SC.Board.getUnitById(state, targetId);
       if (!target || target.side === unit.side) return { ok: false, error: '攻撃できない相手です' };
-      if (!SC.Movement.isInAttackRange(unit.type, destination, target)) {
+      if (!SC.Movement.canAttackFrom(unit, destination, target)) {
         return { ok: false, error: '攻撃が届きません' };
       }
     }
@@ -217,7 +217,7 @@
     return Object.keys(state.gates).map(function (key) {
       var parts = key.split(',');
       return { x: Number(parts[0]), y: Number(parts[1]), hp: state.gates[key] };
-    }).filter(function (gate) { return SC.Movement.isInAttackRange(unit.type, destination, gate); });
+    }).filter(function (gate) { return SC.Movement.canAttackFrom(unit, destination, gate); });
   }
 
   function attackGate(state, unitId, destination, gatePos) {

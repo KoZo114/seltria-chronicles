@@ -70,6 +70,10 @@
     king: '王の部隊が全滅したら負けです。城にいると受けるダメージが30％減るので、城から出さないのが安全です。',
     archer: '弓兵は2マス先だけを攻撃できます。隣の敵は撃てないので、歩兵の後ろに置きましょう。',
     cleric: '僧侶は、隣の味方（6人隊）に祈って、倒れた兵士を戻せます。動かずに祈るほうが多く戻せるので、前線のすぐ後ろに置いておきましょう。打たれ弱いので、敵の前には出さないこと。',
+    // 攻撃の形（2026-10-22）
+    lance: 'ナイトは槍の部隊です。動かずにその場で突くと、まっすぐ2マス先にも届きます（うすい赤のマス）。味方の後ろからでも突けます。まっすぐ2マス先から撃ってきた弓兵には反撃できます。',
+    around: 'この部隊は、斜めも含めたまわり8マスに攻撃でき、どこから攻められても反撃します。囲んで斜めから攻めても反撃を受けるので、弓や魔法で離れて攻めるのが安全です。',
+    longbow: 'エルフ・ハイエルフは長弓です。動かずにその場で撃つと、1マス遠くまで届きます（うすい赤のマス）。反撃も遠くまで届きます。',
     forest: '森は移動しにくい代わりに、そこにいると相手の兵士1人の打撃が2減ります。守りにとても向いた地形です。'
   };
 
@@ -233,7 +237,7 @@
         refresh();
         return;
       }
-      if (tapped && tapped.side !== unit.side && SC.Movement.isInAttackRange(unit.type, position, tapped)) {
+      if (tapped && tapped.side !== unit.side && SC.Movement.canAttackFrom(unit, position, tapped)) {
         if (selection.mode === 'forecast' && selection.targetId === tapped.id) { if (!isInputLocked()) commitAction(tapped.id); return; }
         selection.pending = position;
         selection.mode = 'forecast';
@@ -325,9 +329,12 @@
     else if (unitType(unit).summon && unitType(unit).summon.types.length > 1) showTipOnce('wizard');
     else if (unitType(unit).summon) showTipOnce('summon');
     else if (unitType(unit).prayer && unitType(unit).prayer.heavyAmount) showTipOnce('priest');
-    else if (stage.newRule === 'siege' && (unitType(unit).isKing || unitType(unit).capturesTowns)) showTipOnce('fort');
+    else if (unitType(unit).lance) showTipOnce('lance');
+    else if (unitType(unit).allDirections && unitType(unit).family !== 'large') showTipOnce('around');
+    else if (unitType(unit).stillRangeBonus) showTipOnce('longbow');
+    else if (stage.newRule === 'siege' && (unitType(unit).isKing || SC.Economy.capturesTowns(unit))) showTipOnce('fort');
     else if (unitType(unit).isKing && SC.Economy.isEnabled(state)) showTipOnce('hire');
-    else if (unitType(unit).capturesTowns && SC.Economy.isEnabled(state)) showTipOnce('town');
+    else if (SC.Economy.capturesTowns(unit) && SC.Economy.isEnabled(state)) showTipOnce('town');
     else if (unitType(unit).diagonalFront) showTipOnce('cavalry');
     else if (unitType(unit).isKing) showTipOnce('king');
     else if (SC.Prayer.canPray(unit)) showTipOnce('cleric');
@@ -449,7 +456,7 @@
     var unit = selectedUnit();
     var position = selectedPosition();
     return SC.Game.getUnits(state, SC.Game.otherSide(unit.side)).filter(function (enemy) {
-      return SC.Movement.isInAttackRange(unit.type, position, enemy);
+      return SC.Movement.canAttackFrom(unit, position, enemy);
     });
   }
 
@@ -1064,13 +1071,13 @@
       });
       var attackOrigins = selection.mode === 'selected' ? selection.reach : [position];
       attackOrigins.forEach(function (origin) {
-        SC.Movement.getAttackTiles(state, unit.type, origin).forEach(function (tile) {
+        SC.Movement.getAttackTiles(state, unit.type, origin, undefined, SC.Movement.isSamePlace(unit, origin)).forEach(function (tile) {
           var key = tileKey(tile.x, tile.y);
           if (!view.moveTiles[key]) view.rangeTiles[key] = true;
         });
       });
       SC.Game.getUnits(state, SC.Game.otherSide(unit.side)).forEach(function (enemy) {
-        if (SC.Movement.isInAttackRange(unit.type, position, enemy)) view.targetTiles[tileKey(enemy.x, enemy.y)] = true;
+        if (SC.Movement.canAttackFrom(unit, position, enemy)) view.targetTiles[tileKey(enemy.x, enemy.y)] = true;
       });
       SC.Prayer.getPrayerTargets(state, unit, position).forEach(function (ally) { view.allyTiles[tileKey(ally.x, ally.y)] = true; });
       if (selection.mode !== 'selected') getGateTargets().forEach(function (gate) { view.targetTiles[tileKey(gate.x, gate.y)] = true; });
@@ -1102,7 +1109,7 @@
           var reach = SC.Movement.getReachableTiles(state, inspected);
           reach.forEach(function (tile) { view.dangerTiles[tileKey(tile.x, tile.y)] = true; });
           reach.forEach(function (origin) {
-            SC.Movement.getAttackTiles(state, inspected.type, origin).forEach(function (tile) {
+            SC.Movement.getAttackTiles(state, inspected.type, origin, undefined, SC.Movement.isSamePlace(inspected, origin)).forEach(function (tile) {
               var key = tileKey(tile.x, tile.y);
               if (!view.dangerTiles[key]) view.rangeTiles[key] = true;
             });
@@ -1247,10 +1254,15 @@
     return parts.length > 0 ? parts.join('、') : '効果なし';
   }
 
+  // 情報欄の射程の短い説明（形は右の小さな図で見せる。2026-10-22）
   function describeRange(type) {
-    if (type.diagonalFront) return '隣（斜めも）';
-    if (type.rangeMin > 1) return '射程' + type.rangeMax + '（隣は不可）';
-    return '射程' + (type.rangeMin === type.rangeMax ? type.rangeMax : type.rangeMin + '〜' + type.rangeMax);
+    if (type.allDirections) return '8方向';
+    if (type.diagonalFront) return '斜め前も';
+    if (type.lance) return '槍';
+    if (type.stillRangeBonus) return '長弓';
+    if (type.rangeMin > 1) return '射程' + type.rangeMax;
+    if (type.rangeMax > 1) return '射程' + type.rangeMin + '〜' + type.rangeMax;
+    return '';
   }
 
   function unitNameHtml(unit) {
@@ -1287,7 +1299,7 @@
       (unit.braced ? '　<span class="strong">構え中</span>' : '') + (unit.blessing ? '　<span class="strong">守り+' + unit.blessing + '</span>' : '') + (unit.acted && !unit.braced ? '　<span class="dim">行動済み</span>' : '') +
       (affinityLine ? ' ' + affinityLine : '') + '<br>' +
       '1人あたり 攻撃' + type.attack + ' 体力' + type.soldierHp + '　移動' + type.move + ' ' + describeRange(type) + '<br>' +
-      '<span class="dim">' + lastLine + '</span></div></div>';
+      '<span class="dim">' + lastLine + '</span></div>' + SC.Render.attackShapeHtml(unit.type) + '</div>';
   }
 
   // 相性：得意な系統と、苦手な系統（その系統を得意とする系統）。いまのステージに出てくる系統だけを書く
