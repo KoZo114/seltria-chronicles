@@ -322,7 +322,7 @@
     };
     state.units.push(summoned);
     events.push({ type: 'summon', unitId: unit.id, summonedId: summoned.id, x: tile.x, y: tile.y, soldiers: soldiers, unitType: typeId, rolls: rolls, side: unit.side, casterType: unit.type });
-    if (state.experience && unit.regularId) {
+    if (state.experience && SC.Regulars.canGainExperience(unit)) {
       // 召喚1回の成功で SC.EXPERIENCE.perSummon 点（人数ぶんにすると、毎ターン呼ぶだけで1ステージ25点ほどたまり、育ちすぎた）
       unit.exp = (unit.exp || 0) + SC.EXPERIENCE.perSummon;
       events.push({ type: 'exp', unitId: unit.id, amount: SC.EXPERIENCE.perSummon, exp: unit.exp });

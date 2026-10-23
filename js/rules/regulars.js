@@ -36,6 +36,11 @@
     return rank ? rank.exp : null;
   }
 
+  // 経験値が入るか：これ以上ランクアップしない（いちばん上の段の）隊長には入れない（2026-10-22 ユーザーの希望）
+  function canGainExperience(unit) {
+    return !!unit.regularId && !!getNextRank(unit.regularId, unit.type);
+  }
+
   // 今ランクアップできるか（満タンで、次のクラスがゲームにある）
   function canRankUp(regularId, typeId, exp) {
     var rank = getNextRank(regularId, typeId);
@@ -68,7 +73,7 @@
       if (strike.type !== 'strike' || strike.lost <= 0 && !strike.killed) return;
       var attacker = SC.Board.getUnitById(state, strike.attackerId);
       var defender = SC.Board.getUnitById(state, strike.defenderId);
-      if (!attacker || !attacker.regularId || !defender) return;
+      if (!attacker || !canGainExperience(attacker) || !defender) return;
       var gained = getExperience(defender.type, strike.lost, strike.killed);
       attacker.exp = (attacker.exp || 0) + gained;
       events.push({ type: 'exp', unitId: attacker.id, amount: gained, exp: attacker.exp });
@@ -82,7 +87,7 @@
 
   // 祈り：回復役の正規部隊は、戻した兵士1人につき perPrayedSoldier 点（回復役は敵をほとんど倒さないので、祈りで育つようにする）
   function gainFromPrayer(state, unit, restored) {
-    if (!state.experience || !unit.regularId || restored <= 0) return [];
+    if (!state.experience || !canGainExperience(unit) || restored <= 0) return [];
     var gained = restored * SC.EXPERIENCE.perPrayedSoldier;
     unit.exp = (unit.exp || 0) + gained;
     var events = [{ type: 'exp', unitId: unit.id, amount: gained, exp: unit.exp }];
@@ -125,6 +130,7 @@
     getNextRank: getNextRank,
     getThreshold: getThreshold,
     canRankUp: canRankUp,
+    canGainExperience: canGainExperience,
     getExperience: getExperience,
     gainFromStrikes: gainFromStrikes,
     gainFromPrayer: gainFromPrayer,

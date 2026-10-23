@@ -307,7 +307,7 @@
           '<span class="prep-art">' + (art ? '<img src="' + art + '" alt="">' : '') + '</span>' +
           '<span class="prep-text"><span class="prep-name">' + member.name + '隊<small>' + type.name + '</small></span>' +
           '<span class="prep-exp"><i style="width:' + gauge + '%"></i></span>' +
-          '<span class="prep-exp-label">' + (threshold ? '経験 ' + member.exp + '／' + threshold + (SC.Regulars.canRankUp(member.id, member.type, member.exp) ? '　ランクアップできる' : member.exp >= threshold ? '　（次のクラスはまだ）' : '') : '経験 ' + member.exp + '（これ以上ランクアップしない）') + '</span></span>';
+          '<span class="prep-exp-label">' + (threshold ? '経験 ' + member.exp + '／' + threshold + (SC.Regulars.canRankUp(member.id, member.type, member.exp) ? '　ランクアップできる' : member.exp >= threshold ? '　（次のクラスはまだ）' : '') : 'いちばん上のクラス（経験値は入らない）') + '</span></span>';
         card.onclick = function (event) {
           event.stopPropagation();
           if (must) return;   // 必ず出撃する隊長は、外せない

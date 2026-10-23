@@ -950,7 +950,7 @@
       var exp = unit ? (unit.exp || 0) : fallen ? Math.floor((fallen.exp || 0) / 2) : before.exp;
       var threshold = SC.Regulars.getThreshold(regularId, type);
       var note = !unit ? '<em class="bad">撤退（経験値が半分）</em>' : type !== before.type ? '<em>' + SC.UNIT_TYPES[type].name + 'にランクアップ！</em>' : '';
-      return '<div><b>' + before.name + '隊</b><span>' + SC.UNIT_TYPES[type].name + '　経験 ' + exp + (threshold ? '／' + threshold : '') + '</span>' + note + '</div>';
+      return '<div><b>' + before.name + '隊</b><span>' + SC.UNIT_TYPES[type].name + (threshold ? '　経験 ' + exp + '／' + threshold : '　いちばん上のクラス') + '</span>' + note + '</div>';
     }).join('');
     return rows ? '<div class="result-regulars"><span>正規部隊</span>' + rows + '</div>' : '';
   }
@@ -1274,7 +1274,7 @@
   function describeExperience(unit) {
     var threshold = SC.Regulars.getThreshold(unit.regularId, unit.type);
     if (!state.experience) return '経験 ' + (unit.exp || 0) + '（このステージの経験値はもらい済み）';
-    if (!threshold) return '経験 ' + (unit.exp || 0);
+    if (!threshold) return 'いちばん上のクラス（経験値は入らない）';
     // 次のクラスがまだゲームに無いとき（サーガ・ハイプリーストはステージ17から）は、経験値はためておき、登場したらランクアップする
     var nextReady = !!SC.UNIT_TYPES[SC.Regulars.getNextRank(unit.regularId, unit.type).next];
     if (!nextReady && (unit.exp || 0) >= threshold) return '経験 ' + unit.exp + '／' + threshold + '（満タン。次のクラスは、これから登場）';
