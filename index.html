@@ -10,7 +10,7 @@
   <meta name="theme-color" content="#161c28">
   <meta name="format-detection" content="telephone=no">
   <title>セルトリア戦記 SELTRIA CHRONICLES</title>
-  <link rel="stylesheet" href="css/style.css?v=20261022h">
+  <link rel="stylesheet" href="css/style.css?v=20261025a">
 </head>
 <body>
   <div id="app">
@@ -28,7 +28,10 @@
         <p class="title-record" id="title-record"></p>
         <button type="button" class="title-button primary hidden" id="resume-button">続きから</button>
         <button type="button" class="title-button primary" id="start-button">はじめる</button>
-        <button type="button" class="title-button" id="title-help-button">遊び方</button>
+        <div class="title-row">
+          <button type="button" class="title-button" id="memories-button">思い出</button>
+          <button type="button" class="title-button" id="title-help-button">遊び方</button>
+        </div>
       </div>
       <!-- ステージを選ぶ画面（「はじめる」で開く） -->
       <div id="stage-select" class="hidden">
@@ -42,6 +45,7 @@
             <button type="button" class="stage-arrow next" id="stage-next" aria-label="次の章"></button>
           </div>
           <button type="button" class="stage-back" id="stage-back-button">もどる</button>
+          <button type="button" class="stage-reset" id="stage-reset-button">記録を消して、はじめから</button>
         </div>
       </div>
     </section>
@@ -93,6 +97,7 @@
         <div id="prep-list"></div>
         <button type="button" class="title-button primary prep-go" id="prep-go">出陣する</button>
         <button type="button" class="stage-back" id="prep-back">もどる</button>
+        <button type="button" class="stage-reset hidden" id="prep-rewind">このステージからやり直す</button>
       </div>
     </div>
 
@@ -108,32 +113,32 @@
     </div>
   </div>
 
-  <script src="js/data/terrain.js?v=20261022h"></script>
-  <script src="js/data/units.js?v=20261022h"></script>
-  <script src="js/data/regulars.js?v=20261022h"></script>
-  <script src="js/data/stages.js?v=20261022h"></script>
-  <script src="js/data/talks.js?v=20261022h"></script>
-  <script src="js/data/assets.js?v=20261022h"></script>
-  <script src="js/rules/movement.js?v=20261022h"></script>
-  <script src="js/rules/combat.js?v=20261022h"></script>
-  <script src="js/rules/prayer.js?v=20261022h"></script>
-  <script src="js/rules/economy.js?v=20261022h"></script>
-  <script src="js/rules/regulars.js?v=20261022h"></script>
-  <script src="js/rules/game.js?v=20261022h"></script>
-  <script src="js/rules/ai.js?v=20261022h"></script>
-  <script src="js/save.js?v=20261022h"></script>
-  <script src="js/ui/sound.js?v=20261022h"></script>
-  <script src="js/ui/render.js?v=20261022h"></script>
-  <script src="js/ui/screens.js?v=20261022h"></script>
-  <script src="js/ui/battle-scene.js?v=20261022h"></script>
-  <script src="js/ui/hire-scene.js?v=20261022h"></script>
-  <script src="js/ui/summon-scene.js?v=20261022h"></script>
-  <script src="js/ui/rankup-scene.js?v=20261022h"></script>
-  <script src="js/ui/talk-scene.js?v=20261022h"></script>
-  <script src="js/ui/ending-scene.js?v=20261022h"></script>
-  <script src="js/ui/capture-scene.js?v=20261022h"></script>
-  <script src="js/ui/overview.js?v=20261022h"></script>
-  <script src="js/ui/input.js?v=20261022h"></script>
-  <script src="js/main.js?v=20261022h"></script>
+  <script src="js/data/terrain.js?v=20261025a"></script>
+  <script src="js/data/units.js?v=20261025a"></script>
+  <script src="js/data/regulars.js?v=20261025a"></script>
+  <script src="js/data/stages.js?v=20261025a"></script>
+  <script src="js/data/talks.js?v=20261025a"></script>
+  <script src="js/data/assets.js?v=20261025a"></script>
+  <script src="js/rules/movement.js?v=20261025a"></script>
+  <script src="js/rules/combat.js?v=20261025a"></script>
+  <script src="js/rules/prayer.js?v=20261025a"></script>
+  <script src="js/rules/economy.js?v=20261025a"></script>
+  <script src="js/rules/regulars.js?v=20261025a"></script>
+  <script src="js/rules/game.js?v=20261025a"></script>
+  <script src="js/rules/ai.js?v=20261025a"></script>
+  <script src="js/save.js?v=20261025a"></script>
+  <script src="js/ui/sound.js?v=20261025a"></script>
+  <script src="js/ui/render.js?v=20261025a"></script>
+  <script src="js/ui/screens.js?v=20261025a"></script>
+  <script src="js/ui/battle-scene.js?v=20261025a"></script>
+  <script src="js/ui/hire-scene.js?v=20261025a"></script>
+  <script src="js/ui/summon-scene.js?v=20261025a"></script>
+  <script src="js/ui/rankup-scene.js?v=20261025a"></script>
+  <script src="js/ui/talk-scene.js?v=20261025a"></script>
+  <script src="js/ui/ending-scene.js?v=20261025a"></script>
+  <script src="js/ui/capture-scene.js?v=20261025a"></script>
+  <script src="js/ui/overview.js?v=20261025a"></script>
+  <script src="js/ui/input.js?v=20261025a"></script>
+  <script src="js/main.js?v=20261025a"></script>
 </body>
 </html>

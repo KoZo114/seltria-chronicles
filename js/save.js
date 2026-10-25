@@ -4,7 +4,7 @@
   var SAVE_KEY = 'seltria-chronicles-save-v1';
 
   function createEmptySave() {
-    return { version: 1, stages: {}, seenTips: {}, settings: { battleScene: true, sound: true }, battle: null, roster: [], rosterVersion: (SC.ROSTER_VERSION || 1) };
+    return { version: 1, stages: {}, seenTips: {}, settings: { battleScene: true, sound: true }, battle: null, roster: [], rosterVersion: (SC.ROSTER_VERSION || 1), rosterBefore: {} };
   }
 
   function isPlainObject(value) {
@@ -48,16 +48,24 @@
         save.rosterWasReset = true;
         if (save.battle && save.battle.state && (save.battle.state.deployed || []).length > 0) save.battle = null;
       }
-      if (rosterIsCurrent && Array.isArray(parsed.roster)) {
-        save.roster = parsed.roster.filter(function (member) {
-          return isPlainObject(member) && typeof member.id === 'string' && typeof member.name === 'string' &&
-            typeof member.type === 'string' && Number.isFinite(member.exp) && member.exp >= 0;
-        }).map(function (member) { return { id: member.id, name: member.name, type: member.type, exp: Math.floor(member.exp) }; });
+      if (rosterIsCurrent && Array.isArray(parsed.roster)) save.roster = cleanRoster(parsed.roster);
+      // ステージを始める前の正規部隊の記録（「ここからやり直す」で戻るため。2026-10-25）
+      if (rosterIsCurrent && isPlainObject(parsed.rosterBefore)) {
+        Object.keys(parsed.rosterBefore).forEach(function (stageId) {
+          if (Array.isArray(parsed.rosterBefore[stageId])) save.rosterBefore[stageId] = cleanRoster(parsed.rosterBefore[stageId]);
+        });
       }
     } catch (error) {
       return createEmptySave();
     }
     return save;
+  }
+
+  function cleanRoster(roster) {
+    return roster.filter(function (member) {
+      return isPlainObject(member) && typeof member.id === 'string' && typeof member.name === 'string' &&
+        typeof member.type === 'string' && Number.isFinite(member.exp) && member.exp >= 0;
+    }).map(function (member) { return { id: member.id, name: member.name, type: member.type, exp: Math.floor(member.exp) }; });
   }
 
   function store(save, storage) {
@@ -88,6 +96,47 @@
 
   function markExperienceEarned(save, stageId) {
     if (save.stages[stageId]) save.stages[stageId].expEarned = true;
+  }
+
+  // ---- やり直し（2026-10-25 ユーザーの希望） ----
+  // 正規部隊のいるステージを、経験値がもらえる状態で始めるときに、始める前の正規部隊を覚えておく
+  function rememberRosterBefore(save, stageId) {
+    if (!canEarnExperience(save, stageId)) return;
+    save.rosterBefore = save.rosterBefore || {};
+    save.rosterBefore[stageId] = cleanRoster(save.roster || []);
+  }
+
+  // 正規部隊のいるステージの番号（小さい順）
+  function getRegularStageIds(stages) {
+    return Object.keys(stages).map(Number).filter(function (id) { return !!stages[id].regularSlots; }).sort(function (a, b) { return a - b; });
+  }
+
+  // 「ここからやり直す」ができるか：経験値をもらい済みで、始める前の正規部隊を覚えている（最初のステージは、いつでも最初の隊長たちに戻れる）
+  function canRewindTo(save, stageId, stages) {
+    var ids = getRegularStageIds(stages);
+    if (ids.indexOf(stageId) < 0 || canEarnExperience(save, stageId)) return false;
+    return stageId === ids[0] || !!(save.rosterBefore && save.rosterBefore[stageId]);
+  }
+
+  // そのステージを始める前の正規部隊に戻し、そのステージと後のステージで、経験値をもう一度もらえるようにする。クリアの記録は残す
+  function rewindTo(save, stageId, stages) {
+    if (!canRewindTo(save, stageId, stages)) return false;
+    var ids = getRegularStageIds(stages);
+    save.roster = stageId === ids[0] ? [] : cleanRoster(save.rosterBefore[stageId]);
+    ids.forEach(function (id) {
+      if (id < stageId) return;
+      if (save.stages[id]) delete save.stages[id].expEarned;
+      if (save.rosterBefore && id > stageId) delete save.rosterBefore[id];
+    });
+    save.battle = null;   // 遊びかけの戦いは、隊長たちが変わるので消す
+    return true;
+  }
+
+  // 記録を全部消して、はじめから（音と戦闘シーンの設定だけ残す）
+  function resetAll(save) {
+    var fresh = createEmptySave();
+    fresh.settings = { battleScene: save.settings.battleScene, sound: save.settings.sound };
+    return fresh;
   }
 
   // 遊べるステージか。ステージ1はいつでも、それ以降は一つ前のステージをクリアすると遊べる
@@ -164,6 +213,7 @@
   SC.Save = {
     SAVE_KEY: SAVE_KEY, createEmptySave: createEmptySave, load: load, store: store, recordClear: recordClear, isStageUnlocked: isStageUnlocked, getUnlockHint: getUnlockHint, getNextStage: getNextStage,
     canEarnExperience: canEarnExperience, markExperienceEarned: markExperienceEarned,
+    rememberRosterBefore: rememberRosterBefore, canRewindTo: canRewindTo, rewindTo: rewindTo, resetAll: resetAll,
     saveBattle: saveBattle, clearBattle: clearBattle, restoreBattle: restoreBattle
   };
 })(typeof window !== 'undefined' ? window : globalThis);

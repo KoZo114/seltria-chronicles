@@ -261,6 +261,8 @@
   // 画像の読み込みを待ってから始める。3秒たっても終わらなければ、読み込めた分だけで始める。
   // regulars：出撃する正規部隊の記録（無ければ null）。クリアしたステージの遊び直しでは、経験値は入らない
   function launchStage(stageId, regulars) {
+    // 正規部隊のいるステージ：始める前の隊長たちを覚えておく（あとで「このステージからやり直す」で戻れるように）
+    if (regulars && SC.STAGES[stageId].regularSlots) { SC.Save.rememberRosterBefore(save, stageId); SC.Save.store(save); }
     var timeout = new Promise(function (resolve) { root.setTimeout(resolve, 3000); });
     Promise.race([imagesReady, timeout]).then(function () {
       if (titleVideo) titleVideo.pause();
@@ -333,7 +335,97 @@
       if (byId('game-screen').classList.contains('hidden')) showStageSelect();
       else { SC.Sound.stopMusic(); showTitle(); showStageSelect(); }   // 勝ったあとの「次のステージへ」から来たとき
     };
+    // このステージからやり直す（クリアして経験値をもらったステージ。2026-10-25）
+    var rewind = byId('prep-rewind');
+    rewind.classList.toggle('hidden', !SC.Save.canRewindTo(save, stageId, SC.STAGES));
+    rewind.onclick = function (event) {
+      event.stopPropagation();
+      SC.Screens.showModal({
+        title: 'このステージからやり直す',
+        text: '隊長たちを、ステージ' + stageId + 'を始める前の姿と経験値に戻します。\nステージ' + stageId + 'と、それより後のステージで、経験値をもう一度もらえるようになります。\nクリアの記録と、遊べるステージは、そのまま残ります。\n\nやり直しますか？',
+        stacked: true,
+        buttons: [
+          { label: 'やり直す', style: 'danger', onTap: function () {
+            SC.Save.rewindTo(save, stageId, SC.STAGES);
+            SC.Save.store(save);
+            showPrepare(stageId);
+            SC.Screens.showToast('ステージ' + stageId + 'を始める前の隊長たちに戻しました');
+          } },
+          { label: 'やめる', style: 'primary' }
+        ]
+      });
+    };
     byId('prep-select').classList.remove('hidden');
+  }
+
+  // 記録を全部消して、はじめから（2回たずねる）
+  function confirmResetAll() {
+    SC.Screens.showModal({
+      title: '記録を消して、はじめから',
+      text: 'クリアしたステージ、隊長たちの経験値、見た会話など、すべての記録を消します。\n（音と戦闘シーンの設定は残ります）\n\n本当に消しますか？',
+      stacked: true,
+      buttons: [
+        { label: '消す', style: 'danger', onTap: function () {
+          SC.Screens.showModal({
+            title: '最後の確認',
+            text: '消した記録は、もとに戻せません。よろしいですか？',
+            stacked: true,
+            buttons: [
+              { label: 'すべて消して、はじめから', style: 'danger', onTap: function () {
+                save = SC.Save.resetAll(save);
+                SC.Save.store(save);
+                hideStageSelect();
+                showTitle();
+                SC.Screens.showToast('記録を消しました');
+              } },
+              { label: 'やめる', style: 'primary' }
+            ]
+          });
+        } },
+        { label: 'やめる', style: 'primary' }
+      ]
+    });
+  }
+
+  // ---- 思い出（会話とエンディングを、もう一度見る。2026-10-25） ----
+  var MEMORY_TALK_STAGES = [11, 12, 13, 15, 20];
+
+  function allRegularIds() { return SC.REGULARS.map(function (r) { return r.id; }); }   // 思い出では、ガイル隊がいるときだけの会話も出す
+
+  function replayMemory(play) {
+    if (titleVideo) titleVideo.pause();
+    SC.Sound.stopMusic();
+    play().then(function () {
+      playTitleVideo();
+      SC.Sound.playMusic('title', true);
+      showMemories();
+    });
+  }
+
+  function showMemories() {
+    var buttons = MEMORY_TALK_STAGES.filter(function (id) { return SC.TALKS && SC.TALKS[id] && SC.STAGES[id]; }).map(function (id) {
+      var seen = !!save.seenTips['talk_' + id];
+      return {
+        label: seen ? SC.STAGES[id].title : 'ステージ' + id + '　？？？',
+        disabled: !seen,
+        onTap: function () { replayMemory(function () { return SC.TalkScene.play(SC.TALKS[id], allRegularIds()); }); }
+      };
+    });
+    var lastId = getStageIds().slice(-1)[0];
+    var endingSeen = !!(save.stages[lastId] && save.stages[lastId].cleared) && !!SC.STAGES[lastId].endingStory;
+    buttons.push({
+      label: endingSeen ? 'エンディング' : 'エンディング　？？？',
+      disabled: !endingSeen,
+      onTap: function () {
+        replayMemory(function () {
+          return SC.TalkScene.play((SC.ENDING_TALKS || {})[lastId] || [], allRegularIds()).then(function () {
+            return SC.EndingScene.play({ story: SC.STAGES[lastId].endingStory });
+          });
+        });
+      }
+    });
+    buttons.push({ label: 'とじる', style: 'primary' });
+    SC.Screens.showModal({ title: '思い出', text: '見た会話を、声つきでもう一度見られます。', kind: 'memories', stacked: true, buttons: buttons });
   }
 
   function hidePrepare() { byId('prep-select').classList.add('hidden'); }
@@ -378,6 +470,8 @@
       if (event.target === byId('stage-select')) hideStageSelect();   // 画面の外側をタップしても閉じる
     };
     byId('title-help-button').onclick = function () { SC.Screens.showHelp(); };
+    byId('memories-button').onclick = showMemories;
+    byId('stage-reset-button').onclick = function (event) { event.stopPropagation(); confirmResetAll(); };
     root.addEventListener('resize', SC.Render.layout);
     root.addEventListener('orientationchange', function () { root.setTimeout(SC.Render.layout, 250); });
     preventBrowserGestures();
